@@ -15,7 +15,7 @@ void trans_handle_register(MFTP_TRANS_TYPE_T trans_type, MFTP_TRANS_HANDLE_T tra
 
 int trans_init()
 {
-    MFTP_TRANS_TYPE_T trans_type;
+    MFTP_TRANS_TYPE_T trans_type = MFTP_TRANS_TYPE_NUM;
     int ret = 0;
 
     if ((UINT32_T)trans_type < MFTP_TRANS_TYPE_NUM)
@@ -30,7 +30,7 @@ int trans_init()
 
 int trans_recv()
 {
-    MFTP_TRANS_TYPE_T trans_type;
+    MFTP_TRANS_TYPE_T trans_type = MFTP_TRANS_TYPE_NUM;
     int ret = 0;
 
     if ((UINT32_T)trans_type < MFTP_TRANS_TYPE_NUM)
@@ -45,7 +45,7 @@ int trans_recv()
 
 int trans_send()
 {
-    MFTP_TRANS_TYPE_T trans_type;
+    MFTP_TRANS_TYPE_T trans_type = MFTP_TRANS_TYPE_NUM;
     int ret = 0;
 
     if ((UINT32_T)trans_type < MFTP_TRANS_TYPE_NUM)
@@ -60,7 +60,7 @@ int trans_send()
 
 int trans_uninit()
 {
-    MFTP_TRANS_TYPE_T trans_type;
+    MFTP_TRANS_TYPE_T trans_type = MFTP_TRANS_TYPE_NUM;
     int ret = 0;
 
     if ((UINT32_T)trans_type < MFTP_TRANS_TYPE_NUM)

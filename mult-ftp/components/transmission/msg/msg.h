@@ -7,7 +7,8 @@ typedef enum
 {
     MFTP_MSG_TYPE_HEAD = 0,
     MFTP_MSG_TYPE_FILE_INFO,
-    MFTP_MSG_TYPE_FILE_DATA
+    MFTP_MSG_TYPE_FILE_DATA,
+    MFTP_MSG_TYPE_END
 } MFTP_MSG_TYPE_T;
 
 typedef struct 

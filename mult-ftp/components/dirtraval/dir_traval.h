@@ -1,8 +1,8 @@
 #ifndef DIR_TRAVAL
 #define DIR_TRAVAL
 
-#include "queue.h"
-#include "stack.h"
+#include "mlt_queue.h"
+#include "mlt_stack.h"
 
 #define FILE_NAME_SIZE (256)
 

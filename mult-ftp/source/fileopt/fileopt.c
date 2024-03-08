@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "fileopt.h"
 #include "transmission.h"
 
@@ -69,18 +71,22 @@ static int mftp_file_opt_handle(MFTP_FILE_OPT_T *file_opt)
 int mftp_server_init()
 {
     trans_init();
+
+    return 0;
 }
 
 int mftp_server_uninit()
 {
     trans_uninit();
+
+    return 0;
 }
 
 int mftp_server_loop()
 {
     while (1)
     {
-        MFTP_FILE_OPT_T *file_opt;
+        MFTP_FILE_OPT_T *file_opt = NULL;
 
         trans_recv();
 
@@ -95,18 +101,22 @@ int mftp_server_loop()
 int mftp_client_init()
 {
     trans_init();
+
+    return 0;
 }
 
 int mftp_client_uninit()
 {
     trans_uninit();
+
+    return 0;
 }
 
 int mftp_client_loop()
 {
     while (1)
     {
-        MFTP_FILE_OPT_T *file_opt;
+        MFTP_FILE_OPT_T *file_opt = NULL;
 
         trans_send();
 

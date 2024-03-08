@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "list.h"
+#include "mlt_list.h"
 
 void mlt_list_init(mlt_list_t *head)
 {

@@ -22,6 +22,7 @@ CFLAGS += -I $(SOURCE_DIR)/fileopt
 CFLAGS += -I $(COMMON_DIR)
 CFLAGS += -I $(COMPONENTS_DIR)/structure
 CFLAGS += -I $(COMPONENTS_DIR)/transmission
+CFLAGS += -I $(COMPONENTS_DIR)/transmission/msg
 CFLAGS += -I $(COMPONENTS_DIR)/transmission/serial
 CFLAGS += -I $(COMPONENTS_DIR)/transmission/udp
 CFLAGS += -I $(COMPONENTS_DIR)/transmission/tcp

@@ -17,12 +17,6 @@ typedef enum
 
 } MFTP_COMMAND_T;
 
-typedef enum 
-{
-    MFTP_ROLE_SERVER = 0,
-    MFTP_ROLE_CLIENT,
-} MFTP_ROLE_T;
-
 typedef struct 
 {
     MFTP_COMMAND_T cmd;
@@ -37,16 +31,6 @@ typedef struct
     file_handle_func func;
 } MFTP_FILE_HANDLE_T;
 
-int mftp_server_init();
-
-int mftp_server_uninit();
-
-int mftp_server_loop();
-
-int mftp_client_init();
-
-int mftp_client_uninit();
-
-int mftp_client_loop();
+int mftp_work();
 
 #endif

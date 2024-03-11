@@ -19,8 +19,8 @@ typedef struct
 typedef struct 
 {
     MFTP_MSG_TYPE_T msg_type;
-    UINT64_T data_cache_size;
-    UINT64_T data_real_size;
+    UINT64_T data_size;
+    UINT64_T data_len;
     char data[0];
 } MFTP_MSG_TRANS_T;
 

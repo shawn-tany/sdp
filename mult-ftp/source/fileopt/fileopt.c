@@ -68,61 +68,99 @@ static int mftp_file_opt_handle(MFTP_FILE_OPT_T *file_opt)
     return 0;
 }
 
-int mftp_server_init()
+static int mftp_server_init()
 {
-    trans_init();
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+
+    trans_init(trans_desc);
 
     return 0;
 }
 
-int mftp_server_uninit()
+static int mftp_server_uninit()
 {
-    trans_uninit();
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+
+    trans_uninit(trans_desc);
 
     return 0;
 }
 
-int mftp_server_loop()
+static int mftp_server_loop()
 {
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+    MFTP_MSG_TRANS_T *msg = NULL;
+
     while (1)
     {
         MFTP_FILE_OPT_T *file_opt = NULL;
 
-        trans_recv();
+        trans_recv(trans_desc, msg);
 
         mftp_file_opt_handle(file_opt);
 
-        trans_send();
+        trans_send(trans_desc, msg);
     }
 
     return 0;
 }
 
-int mftp_client_init()
+static int mftp_client_init()
 {
-    trans_init();
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+
+    trans_init(trans_desc);
 
     return 0;
 }
 
-int mftp_client_uninit()
+static int mftp_client_uninit()
 {
-    trans_uninit();
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+
+    trans_uninit(trans_desc);
 
     return 0;
 }
 
-int mftp_client_loop()
+static int mftp_client_loop()
 {
+    MFTP_TRANS_DESC_T *trans_desc = NULL;
+    MFTP_MSG_TRANS_T *msg = NULL;
+
     while (1)
     {
         MFTP_FILE_OPT_T *file_opt = NULL;
 
-        trans_send();
+        trans_send(trans_desc, msg);
 
         mftp_file_opt_handle(file_opt);
 
-        trans_recv();
+        trans_recv(trans_desc, msg);
+    }
+
+    return 0;
+}
+
+int mftp_work()
+{
+    MFTP_ROLE_T role = MFTP_ROLE_SERVER;
+
+    if (MFTP_ROLE_SERVER == role)
+    {
+        mftp_server_init();
+
+        mftp_server_loop();
+
+        mftp_server_uninit();
+    }
+    else
+    {
+        mftp_client_init();
+
+        mftp_client_loop();
+
+        mftp_client_uninit();
     }
 
     return 0;

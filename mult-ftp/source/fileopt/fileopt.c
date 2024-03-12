@@ -89,7 +89,7 @@ static int mftp_server_uninit()
 static int mftp_server_loop()
 {
     MFTP_TRANS_DESC_T *trans_desc = NULL;
-    MFTP_MSG_TRANS_T *msg = NULL;
+    MFTP_MSG_T *msg = NULL;
 
     while (1)
     {
@@ -126,7 +126,7 @@ static int mftp_client_uninit()
 static int mftp_client_loop()
 {
     MFTP_TRANS_DESC_T *trans_desc = NULL;
-    MFTP_MSG_TRANS_T *msg = NULL;
+    MFTP_MSG_T *msg = NULL;
 
     while (1)
     {

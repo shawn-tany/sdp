@@ -34,4 +34,12 @@ typedef unsigned long long UINT64_T;
         return NULL;        \
     }
 
+#define ITEM(a) (sizeof(a) / sizeof(a[0]))
+
+#define MIN(a, b) ((a < b) ? b : a)
+
+#define MAX(a, b) ((a < b) ? a : b)
+
+#define UNUSED(a) ((void)a)
+
 #endif

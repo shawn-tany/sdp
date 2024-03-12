@@ -19,6 +19,12 @@ typedef enum
     MFTP_ROLE_CLIENT,
 } MFTP_ROLE_T;
 
+typedef enum 
+{
+    MFTP_DIRECTION_RECV = 0,
+    MFTP_DIRECTION_SEND,
+} MFTP_DIRECTION_T;
+
 typedef struct 
 {
     MFTP_ROLE_T role;
@@ -48,9 +54,9 @@ void trans_handle_register(MFTP_TRANS_TYPE_T trans_type, MFTP_TRANS_HANDLE_T tra
 
 int trans_init(MFTP_TRANS_DESC_T *trans_desc);
 
-int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_TRANS_T *msg);
+int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg);
 
-int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_TRANS_T *msg);
+int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg);
 
 int trans_uninit(MFTP_TRANS_DESC_T *trans_desc);
 

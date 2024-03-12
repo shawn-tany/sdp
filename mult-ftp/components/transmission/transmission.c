@@ -30,7 +30,7 @@ int trans_init(MFTP_TRANS_DESC_T *trans_desc)
     return ret;
 }
 
-int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_TRANS_T *msg)
+int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg)
 {    
     PTR_CHECK_N1(trans_desc);    
     PTR_CHECK_N1(msg);
@@ -48,7 +48,7 @@ int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_TRANS_T *msg)
     return ret;
 }
 
-int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_TRANS_T *msg)
+int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg)
 {
     PTR_CHECK_N1(trans_desc);    
     PTR_CHECK_N1(msg);

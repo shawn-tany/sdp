@@ -1,10 +1,13 @@
 CC = gcc
 
+SOURCE_DIR = $(PWD)
+ROOT_DIR = $(SOURCE_DIR)/../..
+COMPONENTS_DIR = $(SOURCE_DIR)/../components
+COMMON_DIR = $(SOURCE_DIR)/../common
+
 APP = mftp
 
-COMPONENTS_DIR = ../components
-COMMON_DIR = ../common
-SOURCE_DIR = .
+BUILD_DIR = ../build
 
 SRCS  = $(SOURCE_DIR)/main.c
 SRCS += $(SOURCE_DIR)/fileopt/*.c
@@ -28,8 +31,8 @@ CFLAGS += -I $(COMPONENTS_DIR)/transmission/udp
 CFLAGS += -I $(COMPONENTS_DIR)/transmission/tcp
 CFLAGS += -I $(COMPONENTS_DIR)/dirtraval
 
-ALL :
-	$(CC) $(SRCS) $(CFLAGS) -o $(APP)
+ALL : compile_check compile
 
-clean :
-	rm -rf $(APP)
+clean : clean_build
+
+include $(ROOT_DIR)/env.mk

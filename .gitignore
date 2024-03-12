@@ -1,3 +1,4 @@
 .vscode/
 mult-ftp/source/mftp
 mult-ftp/build/
+cli/build/

@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#define SDP_CLI_MAX_ROWHEAD_LEN 36
 #define SDP_CLI_MAX_LINE_LEN  512
 #define SDP_CLI_MAX_PARAM_LEN 36
 #define SDP_CLI_MAX_PARAM_NUM 16
@@ -12,7 +13,8 @@ typedef enum
     SDP_CLI_CHARACTER_TYPE_COMPLECTION = 0,
     SDP_CLI_CHARACTER_TYPE_EXECUTE,
     SDP_CLI_CHARACTER_TYPE_HELP,
-    SDP_CLI_CHARACTER_TYPE_SEPARATE,
+    SDP_CLI_CHARACTER_TYPE_SEPARATE,    
+    SDP_CLI_CHARACTER_TYPE_BACKSPACE,
     SDP_CLI_CHARACTER_TYPE_DELETE,
     SDP_CLI_CHARACTER_TYPE_OP_UP,
     SDP_CLI_CHARACTER_TYPE_OP_DOWN,
@@ -25,11 +27,13 @@ typedef struct
 {
     int fd;
     char character[SDP_CLI_CHARACTER_TYPE_GENERAL];
+    char *rowhead;
+    char *prompthead;
 } SDP_CLI_CONFIG_T;;
 
 typedef struct
 {
-    char data[SDP_CLI_MAX_LINE_LEN];
+    char buff[SDP_CLI_MAX_LINE_LEN];
     int length;
 } SDP_CLI_LINE_T;
 

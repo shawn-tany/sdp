@@ -16,15 +16,51 @@ static int cli_prints(SDP_CLI_T *sdp_cli, char *string, int length)
     return write(sdp_cli->config.fd, string, length);
 }
 
-static int cli_cursor_move(SDP_CLI_T *sdp_cli, int offset, int direction)
+static int cli_cursor_reset(SDP_CLI_T *sdp_cli)
+{
+    PTR_CHECK_N1(sdp_cli); 
+
+    sdp_cli->line.cursor = 0;
+
+    return 0;
+}
+
+static int cli_cursor_move(SDP_CLI_T *sdp_cli, int direction)
 {
     PTR_CHECK_N1(sdp_cli);    
 
-    if (!direction)
-    {
-        offset = -offset;
-    }
+    int cursor_inc = 0;
+    char ch = 0;
     
+    if (direction)
+    {
+        ch = sdp_cli->config.character[SDP_CLI_CHARACTER_TYPE_OP_RIGHT];
+
+        if (sdp_cli->line.cursor >= sdp_cli->line.length)
+        {
+            return 0;
+        }
+
+        cursor_inc = 1;
+    }
+    else
+    {
+        ch = sdp_cli->config.character[SDP_CLI_CHARACTER_TYPE_OP_LEFT];
+
+        if (0 >= sdp_cli->line.cursor)
+        {
+            return 0;
+        }
+
+        cursor_inc = -1;
+    }
+
+    printf("%d:%d ", sdp_cli->line.cursor, sdp_cli->line.length);
+
+    cli_prints(sdp_cli, &ch, 1);
+
+    sdp_cli->line.cursor += cursor_inc;
+
     return 0;
 }
 
@@ -69,6 +105,8 @@ static int cli_enter_line(SDP_CLI_T *sdp_cli)
     sdp_cli->line.length = 0;
 
     cli_print_line(sdp_cli);
+
+    cli_cursor_reset(sdp_cli);
 
     return 0;
 }
@@ -163,7 +201,7 @@ static int cli_input_char(SDP_CLI_T *sdp_cli)
 
     character = getchar();
     
-    for (i = 0; i < SDP_CLI_CHARACTER_TYPE_GENERAL; ++i)
+    for (i = 0; i < SDP_CLI_CH_SINGLE_GENERAL; ++i)
     {
         if (character == sdp_cli->config.character[i])
         {
@@ -180,44 +218,47 @@ static int cli_input_char(SDP_CLI_T *sdp_cli)
 
     switch (i)
     {
-        case SDP_CLI_CHARACTER_TYPE_COMPLECTION :
+        case SDP_CLI_CH_SINGLE_COMPLECTION :
             cli_completion(sdp_cli);
             break;
             
-        case SDP_CLI_CHARACTER_TYPE_EXECUTE :
+        case SDP_CLI_CH_SINGLE_EXECUTE :
             cli_execute(sdp_cli);
             break;
         
-        case SDP_CLI_CHARACTER_TYPE_HELP :
+        case SDP_CLI_CH_SINGLE_HELP :
             cli_help(sdp_cli);
             break;
         
-        case SDP_CLI_CHARACTER_TYPE_SEPARATE :
+        case SDP_CLI_CH_SINGLE_SEPARATE :
             cli_separate(sdp_cli);
             break;
         
-        case SDP_CLI_CHARACTER_TYPE_DELETE :
+        case SDP_CLI_CH_SINGLE_DELETE :
             cli_delete_char(sdp_cli);
-            break;
-
-        case SDP_CLI_CHARACTER_TYPE_OP_UP :
-            cli_line_switch(sdp_cli, 0);
-            break;
-        
-        case SDP_CLI_CHARACTER_TYPE_OP_DOWN :
-            cli_line_switch(sdp_cli, 1);
-            break;
-        
-        case SDP_CLI_CHARACTER_TYPE_OP_LEFT :
-            cli_cursor_move(sdp_cli, 1, 0);
-            break;
-        
-        case SDP_CLI_CHARACTER_TYPE_OP_RIGHT :
-            cli_cursor_move(sdp_cli, 1, 1);
             break;
 
         default :
             return -1;
+    }
+
+    switch ()
+    {
+        case SDP_CLI_CH_SINGLE_OP_UP :
+            cli_line_switch(sdp_cli, 0);
+            break;
+        
+        case SDP_CLI_CH_SINGLE_OP_DOWN :
+            cli_line_switch(sdp_cli, 1);
+            break;
+        
+        case SDP_CLI_CH_SINGLE_OP_LEFT :
+            cli_cursor_move(sdp_cli, 0);
+            break;
+        
+        case SDP_CLI_CH_SINGLE_OP_RIGHT :
+            cli_cursor_move(sdp_cli, 1);
+            break;
     }
 
     return 0;

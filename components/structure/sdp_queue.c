@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mlt_queue.h"
+#include "sdp_queue.h"
 
 #define PTR_CHECK(p) {  \
     if (!p) {           \
@@ -10,11 +10,11 @@
     }                   \
 }
 
-mlt_queue_t *mlt_queue_create(int node_num, int node_size)
+sdp_queue_t *sdp_queue_create(int node_num, int node_size)
 {
-    mlt_queue_t *queue = NULL;
+    sdp_queue_t *queue = NULL;
 
-    queue = (mlt_queue_t *)malloc(sizeof(mlt_queue_t));
+    queue = (sdp_queue_t *)malloc(sizeof(sdp_queue_t));
 
     if (!queue) {
         return NULL;
@@ -38,7 +38,7 @@ mlt_queue_t *mlt_queue_create(int node_num, int node_size)
     return queue;
 }
 
-int mlt_enqueue(mlt_queue_t *queue, void *node, int size)
+int sdp_enqueue(sdp_queue_t *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
@@ -67,7 +67,7 @@ int mlt_enqueue(mlt_queue_t *queue, void *node, int size)
     return 0;
 }
 
-int mlt_dequeue(mlt_queue_t *queue, void *node, int size)
+int sdp_dequeue(sdp_queue_t *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
@@ -96,7 +96,7 @@ int mlt_dequeue(mlt_queue_t *queue, void *node, int size)
     return 0;
 }
 
-int mlt_queue_head(mlt_queue_t *queue, void *node, int size)
+int sdp_queue_head(sdp_queue_t *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
@@ -115,7 +115,7 @@ int mlt_queue_head(mlt_queue_t *queue, void *node, int size)
     return 0;
 }
 
-void mlt_queue_free(mlt_queue_t *queue)
+void sdp_queue_free(sdp_queue_t *queue)
 {
     if (queue) {
         if (queue->addr) {
@@ -137,7 +137,7 @@ void mlt_queue_free(mlt_queue_t *queue)
 #if 0
 int main()
 {
-    mlt_queue_t *queue = mlt_queue_create(100, sizeof(int));
+    sdp_queue_t *queue = sdp_queue_create(100, sizeof(int));
 
     if (!queue) {
         printf("faild to create queue\n");
@@ -152,47 +152,47 @@ int main()
     
     int loop = start + 50;
     for (i = start; i < loop; ++i, start++) {
-        if (mlt_enqueue(queue, &i, sizeof(i))) {
+        if (sdp_enqueue(queue, &i, sizeof(i))) {
             printf("failed to enqueue\n");
             goto FAIL;
         }
     }
     
-    while (!mlt_dequeue(queue, &node, sizeof(node))) {
+    while (!sdp_dequeue(queue, &node, sizeof(node))) {
         printf("dequeue[%d] : %d\n", ++idex, node);
     }
 
     loop = start + 100;
     for (i = start; i < loop; ++i, start++) {
-        if (mlt_enqueue(queue, &i, sizeof(i))) {
+        if (sdp_enqueue(queue, &i, sizeof(i))) {
             printf("failed to enqueue\n");
             goto FAIL;
         }
     }
     
-    while (!mlt_dequeue(queue, &node, sizeof(node))) {
+    while (!sdp_dequeue(queue, &node, sizeof(node))) {
         printf("dequeue[%d] : %d\n", ++idex, node);
     }
 
     loop = start + 100;
     for (i = start; i < loop; ++i, start++) {
-        if (mlt_enqueue(queue, &i, sizeof(i))) {
+        if (sdp_enqueue(queue, &i, sizeof(i))) {
             printf("failed to enqueue\n");
             goto FAIL;
         }
     }
     
-    while (!mlt_dequeue(queue, &node, sizeof(node))) {
+    while (!sdp_dequeue(queue, &node, sizeof(node))) {
         printf("dequeue[%d] : %d\n", ++idex, node);
     }
 
-    mlt_queue_free(queue);
+    sdp_queue_free(queue);
 
     return 0;
 
 FAIL :
 
-    mlt_queue_free(queue);
+    sdp_queue_free(queue);
 
     return -1;
 }

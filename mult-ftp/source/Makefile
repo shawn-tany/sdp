@@ -2,8 +2,8 @@ CC = gcc
 
 SOURCE_DIR = $(PWD)
 ROOT_DIR = $(SOURCE_DIR)/../..
-COMPONENTS_DIR = $(SOURCE_DIR)/../components
-COMMON_DIR = $(SOURCE_DIR)/../common
+COMPONENTS_DIR = $(ROOT_DIR)/components
+COMMON_DIR = $(ROOT_DIR)/common
 
 APP = mftp
 

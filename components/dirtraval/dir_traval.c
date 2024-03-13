@@ -12,7 +12,7 @@
     if (!p)                     \
         return DIR_ERR_PARAM;   \
 
-static DIR_STATUS_T dir_node_enqueue(mlt_queue_t *queue, const char *fname, int is_dir, int depth)
+static DIR_STATUS_T dir_node_enqueue(sdp_queue_t *queue, const char *fname, int is_dir, int depth)
 {    
     PTR_CHECK(queue);
     PTR_CHECK(fname);
@@ -23,7 +23,7 @@ static DIR_STATUS_T dir_node_enqueue(mlt_queue_t *queue, const char *fname, int 
     node.is_dir = is_dir;
     node.depth = depth;
 
-    if (0 != mlt_enqueue(queue, &node, sizeof(node)))
+    if (0 != sdp_enqueue(queue, &node, sizeof(node)))
     {
         return DIR_ERR_ENQUEUE;
     }
@@ -31,7 +31,7 @@ static DIR_STATUS_T dir_node_enqueue(mlt_queue_t *queue, const char *fname, int 
     return DIR_SUCCESS;
 }
 
-static DIR_STATUS_T dir_node_enstack(mlt_stack_t *stack, const char *fname, int is_dir, int depth)
+static DIR_STATUS_T dir_node_enstack(sdp_stack_t *stack, const char *fname, int is_dir, int depth)
 {
     PTR_CHECK(stack);
     PTR_CHECK(fname);
@@ -42,7 +42,7 @@ static DIR_STATUS_T dir_node_enstack(mlt_stack_t *stack, const char *fname, int 
     node.is_dir = is_dir;
     node.depth = depth;
 
-    if (0 != mlt_enstack(stack, &node, sizeof(node)))
+    if (0 != sdp_enstack(stack, &node, sizeof(node)))
     {
         return DIR_ERR_ENSTACK;
     }
@@ -72,7 +72,7 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
         goto TRAVAL_FAILED;
     }
 
-    (*ctx)->queue = mlt_queue_create(file_num, sizeof(dir_node_t));
+    (*ctx)->queue = sdp_queue_create(file_num, sizeof(dir_node_t));
 
     if (!(*ctx)->queue)
     {
@@ -80,7 +80,7 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
         goto TRAVAL_FAILED;
     }
 
-    (*ctx)->stack = mlt_stack_create(file_num, sizeof(dir_node_t));
+    (*ctx)->stack = sdp_stack_create(file_num, sizeof(dir_node_t));
 
     if (!(*ctx)->stack) 
     {
@@ -106,8 +106,8 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
 
 TRAVAL_FAILED :
 
-    mlt_stack_free((*ctx)->stack);
-    mlt_queue_free((*ctx)->queue);
+    sdp_stack_free((*ctx)->stack);
+    sdp_queue_free((*ctx)->queue);
 
     free((*ctx));
     (*ctx) = NULL;
@@ -119,12 +119,12 @@ DIR_STATUS_T dir_uinit(dir_ctx_t *ctx)
 {
     if (ctx->queue)
     {
-        mlt_queue_free(ctx->queue);
+        sdp_queue_free(ctx->queue);
     }
 
     if (ctx->stack)
     {
-        mlt_stack_free(ctx->stack);
+        sdp_stack_free(ctx->stack);
     }
 
     if (ctx)
@@ -151,14 +151,14 @@ DIR_STATUS_T dir_push(dir_ctx_t *ctx)
         return DIR_SUCCESS;
     }
 
-    while (!mlt_stack_top(ctx->stack, &dir_node, sizeof(dir_node)))
+    while (!sdp_stack_top(ctx->stack, &dir_node, sizeof(dir_node)))
     {
         if (ctx->last_depth == dir_node.depth)
         {
             return DIR_DEPTH_OVER;
         }
 
-        mlt_destack(ctx->stack, &dir_node, sizeof(dir_node));
+        sdp_destack(ctx->stack, &dir_node, sizeof(dir_node));
         
         if (DIR_SUCCESS != (ret = dir_node_enqueue(ctx->queue, dir_node.d_name, 1, dir_node.depth)))
         {
@@ -223,7 +223,7 @@ DIR_STATUS_T dir_pop(dir_ctx_t *ctx, dir_node_t *node)
         return DIR_ALL_OVER;
     }
 
-    if (0 != mlt_dequeue(ctx->queue, node, sizeof(*node)))
+    if (0 != sdp_dequeue(ctx->queue, node, sizeof(*node)))
     {
         return DIR_ERR_DEQUEUE;
     }

@@ -12,6 +12,8 @@
 #include "msg.h"
 #include "transmission.h"
 
+/* server api */
+
 static int tcp_server_init(MFTP_TCP_DESC_T *tcp_desc)
 {
     PTR_CHECK_N1(tcp_desc);
@@ -63,32 +65,61 @@ static int tcp_server_trans(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *msg, MFTP_DIR
 {
     PTR_CHECK_N1(tcp_desc);
 
+    int i = 0;
     int sock = 0;
     int num  = 0;
+    int ready = 0;
 
     struct sockaddr_in server_addr = {0};
     socklen_t client_len = {0};
+
+    fd_set rcvset;
+    struct timeval tv;
 
     /* server ip & server port */
     server_addr.sin_family = AF_INET;
     server_addr.sin_port   = htons(tcp_desc->port);
     inet_pton(AF_INET, tcp_desc->ip, &server_addr.sin_addr);
 
-    sock = accept(tcp_desc->sock, (struct sockaddr *)&server_addr, &client_len);
-    if (0 > sock) 
+    FD_ZERO(&rcvset);
+    FD_SET(tcp_desc->sock, &rcvset);
+
+    tv.tv_sec  = 3;
+    tv.tv_usec = 0;
+    
+    ready = select(tcp_desc->sock + 1, &rcvset, NULL, NULL, &tv);
+    if (0 > ready)
     {
-        perror("accept error");
+        perror("select error");
+        return -1;
+    }
+    else if (0 == ready)
+    {
+        printf("Select timeout\n");
         return -1;
     }
 
-    num = tcp_desc->client_sock_num++;
-    tcp_desc->client_sock[num] = sock;
-    tcp_desc->max_sock = MAX(tcp_desc->max_sock, sock);
+    if (FD_ISSET(tcp_desc->sock, &rcvset))
+    {
+        sock = accept(tcp_desc->sock + 1, (struct sockaddr *)&server_addr, &client_len);
+        if (0 > sock) 
+        {
+            perror("accept error");
+            return -1;
+        }
+
+        for (i = 0; i < ITEM(tcp_desc->client_sock); ++i)
+        {
+            tcp_desc->client_sock[num] = sock;
+        }
+    }
 
     UNUSED(msg);
     
     return sock;
 }
+
+/* client api */
 
 static int tcp_client_init(MFTP_TCP_DESC_T *tcp_desc)
 {
@@ -208,7 +239,7 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
     FD_ZERO(&rcvset);
     FD_SET(tcp_desc->sock, &rcvset);
     
-    ready = select(tcp_desc->max_sock, &rcvset, NULL, NULL, &tv);
+    ready = select(tcp_desc->sock + 1, &rcvset, NULL, NULL, &tv);
     if (0 > ready)
     {
         perror("select error");

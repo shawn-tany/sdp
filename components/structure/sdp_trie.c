@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stack.h"
-#include "trie.h"
+#include "sdp_stack.h"
+#include "sdp_trie.h"
 
 /* insert a new node, and update root node */
-static int trie_new_node(TRIE_NODE_T **root, void *data, int size)
+static int sdp_trie_new_node(SDP_TRIE_NODE_T **root, void *data, int size)
 {
     int idx = (*root)->node_num;
 
     /* create new node */
-    (*root)->node[idx] = (TRIE_NODE_T *)malloc(sizeof(TRIE_NODE_T) + size);
+    (*root)->node[idx] = (SDP_TRIE_NODE_T *)malloc(sizeof(SDP_TRIE_NODE_T) + size);
     if (!(*root)->node[idx])
     {
         return -1;
     }
-    memset((*root)->node[idx], 0, sizeof(TRIE_NODE_T) + size);
+    memset((*root)->node[idx], 0, sizeof(SDP_TRIE_NODE_T) + size);
 
     /* init new node */
     (*root)->node[idx]->data_len = size;
@@ -31,17 +31,17 @@ static int trie_new_node(TRIE_NODE_T **root, void *data, int size)
     return 0;
 }
 
-int trie_strcmp(const void *src, int src_size, const void *dst, int dst_size)
+int sdp_trie_strcmp(const void *src, int src_size, const void *dst, int dst_size)
 {
     return (src_size == dst_size && !strncmp((char *)src, (char *)dst, src_size));
 }
 
-TRIE_ROOT_T *trie_init(trie_cmp_func_t cmp)
+SDP_TRIE_ROOT_T *sdp_trie_init(sdp_trie_cmp_func_t cmp)
 {
-    TRIE_ROOT_T *root = NULL;
+    SDP_TRIE_ROOT_T *root = NULL;
 
     /* create root node */
-    root = (TRIE_ROOT_T *)malloc(sizeof(*root));
+    root = (SDP_TRIE_ROOT_T *)malloc(sizeof(*root));
     if (!root)
     {
         return NULL;
@@ -54,20 +54,20 @@ TRIE_ROOT_T *trie_init(trie_cmp_func_t cmp)
     return root;
 }
 
-int trie_insert(TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, trie_entry_handle_func_t func)
+int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, sdp_trie_entry_handle_func_t func)
 {
     int pattern_idx = 0;
     int node_idx    = 0;
     int search_flag = 0;
 
-    TRIE_NODE_T *search = &root->root;
+    SDP_TRIE_NODE_T *search = &root->root;
 
     for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
     {
         /* new node */
         if (!search->node_num)
         {
-            if (0 > trie_new_node(&search, pattern[pattern_idx], pattern_len[pattern_idx]))
+            if (0 > sdp_trie_new_node(&search, pattern[pattern_idx], pattern_len[pattern_idx]))
             {
                 printf("create new node failed\n");
                 return -1;
@@ -95,7 +95,7 @@ int trie_insert(TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num
         /* not found */
         if (!search_flag)
         {
-            if (0 > trie_new_node(&search, pattern[pattern_idx], pattern_len[pattern_idx]))
+            if (0 > sdp_trie_new_node(&search, pattern[pattern_idx], pattern_len[pattern_idx]))
             {
                 printf("create new node failed\n");
                 return -1;
@@ -117,13 +117,13 @@ int trie_insert(TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num
     return 0;
 }
 
-TRIE_NODE_T *tire_found(TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
+SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
 {
     int pattern_idx = 0;
     int node_idx    = 0;
     int search_flag = 0;
 
-    TRIE_NODE_T *search = &root->root;
+    SDP_TRIE_NODE_T *search = &root->root;
 
     for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
     {
@@ -164,7 +164,7 @@ TRIE_NODE_T *tire_found(TRIE_ROOT_T *root, void **pattern, int *pattern_len, int
     return search;
 }
 
-int trie_child_entry(TRIE_NODE_T *root, trie_entry_handle_func_t func)
+int sdp_trie_child_entry(SDP_TRIE_NODE_T *root, sdp_trie_entry_handle_func_t func)
 {
     int child_idx = 0; 
 
@@ -187,15 +187,15 @@ int trie_child_entry(TRIE_NODE_T *root, trie_entry_handle_func_t func)
     return 0;
 }
 
-int trie_path_entry(TRIE_ROOT_T *root, trie_entry_handle_func_t func)
+int sdp_trie_path_entry(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func)
 {
     int i   = 0;
     int ret = 0;
 
     sdp_stack_t *stack = NULL;
-    TRIE_NODE_T  *node  = NULL;
+    SDP_TRIE_NODE_T  *node  = NULL;
 
-    stack = sdp_stack_create(root->total_node_num, sizeof(TRIE_NODE_T *));
+    stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
     if (!stack)
     {
         printf("create stack failed\n");
@@ -209,16 +209,16 @@ int trie_path_entry(TRIE_ROOT_T *root, trie_entry_handle_func_t func)
             break;
         }
 
-        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(TRIE_NODE_T *));
+        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!sdp_destack(stack, (void *)(&node), sizeof(TRIE_NODE_T *)))
+    while (!sdp_destack(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         if (node->node_num)
         {
             for (i = 0; i < node->node_num; ++i)
             {
-                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(TRIE_NODE_T *));
+                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(SDP_TRIE_NODE_T *));
             }
         }
 
@@ -242,13 +242,13 @@ int trie_path_entry(TRIE_ROOT_T *root, trie_entry_handle_func_t func)
     return ret;
 }
 
-int trie_path_list(TRIE_ROOT_T *root, trie_path_handle_func_t func)
+int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
 {
     int i   = 0;
     int ret = 0;
 
     sdp_stack_t *stack = NULL;
-    TRIE_NODE_T  *node  = NULL;
+    SDP_TRIE_NODE_T  *node  = NULL;
 
     void *child_data[MAX_CHILD_DEPTH];
     int   child_data_length[MAX_CHILD_DEPTH] = {0};
@@ -256,7 +256,7 @@ int trie_path_list(TRIE_ROOT_T *root, trie_path_handle_func_t func)
     int   depth = 0;
     int   idx = 0;
 
-    stack = sdp_stack_create(root->total_node_num, sizeof(TRIE_NODE_T *));
+    stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
     if (!stack)
     {
         printf("create stack failed\n");
@@ -270,10 +270,10 @@ int trie_path_list(TRIE_ROOT_T *root, trie_path_handle_func_t func)
             break;
         }
 
-        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(TRIE_NODE_T *));
+        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!sdp_stack_top(stack, (void *)(&node), sizeof(TRIE_NODE_T *)))
+    while (!sdp_stack_top(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         depth = node->depth;
 
@@ -284,12 +284,12 @@ int trie_path_list(TRIE_ROOT_T *root, trie_path_handle_func_t func)
 
         if (node->node_num && idx < node->node_num)
         {
-            sdp_enstack(stack, (void *)(&node->node[idx]), sizeof(TRIE_NODE_T *));
+            sdp_enstack(stack, (void *)(&node->node[idx]), sizeof(SDP_TRIE_NODE_T *));
             continue;
         }
         else
         {
-            sdp_destack(stack, (void *)(&node), sizeof(TRIE_NODE_T *));
+            sdp_destack(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *));
             child_index[depth] = 0;
         }
 
@@ -310,15 +310,15 @@ int trie_path_list(TRIE_ROOT_T *root, trie_path_handle_func_t func)
     return ret;
 }
 
-int trie_each_entry_accord_hierarchy(TRIE_ROOT_T *root, trie_entry_handle_func_t func)
+int sdp_trie_each_entry_accord_hierarchy(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func)
 {
     int i   = 0;
     int ret = 0;
 
     sdp_stack_t *stack = NULL;
-    TRIE_NODE_T  *node  = NULL;
+    SDP_TRIE_NODE_T  *node  = NULL;
 
-    stack = sdp_stack_create(root->total_node_num, sizeof(TRIE_NODE_T *));
+    stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
     if (!stack)
     {
         printf("create stack failed\n");
@@ -332,16 +332,16 @@ int trie_each_entry_accord_hierarchy(TRIE_ROOT_T *root, trie_entry_handle_func_t
             break;
         }
 
-        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(TRIE_NODE_T *));
+        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!sdp_destack(stack, (void *)(&node), sizeof(TRIE_NODE_T *)))
+    while (!sdp_destack(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         if (node->node_num)
         {
             for (i = 0; i < node->node_num; ++i)
             {
-                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(TRIE_NODE_T *));
+                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(SDP_TRIE_NODE_T *));
             }
         }
 
@@ -362,14 +362,14 @@ int trie_each_entry_accord_hierarchy(TRIE_ROOT_T *root, trie_entry_handle_func_t
     return ret;
 }
 
-int trie_uinit(TRIE_ROOT_T *root)
+int sdp_trie_uinit(SDP_TRIE_ROOT_T *root)
 {
     int i = 0;
 
     sdp_stack_t *stack = NULL;
-    TRIE_NODE_T  *node  = NULL;
+    SDP_TRIE_NODE_T  *node  = NULL;
 
-    stack = sdp_stack_create(root->total_node_num, sizeof(TRIE_NODE_T *));
+    stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
     if (!stack)
     {
         printf("create stack failed\n");
@@ -383,16 +383,16 @@ int trie_uinit(TRIE_ROOT_T *root)
             break;
         }
 
-        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(TRIE_NODE_T *));
+        sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!sdp_destack(stack, (void *)(&node), sizeof(TRIE_NODE_T *)))
+    while (!sdp_destack(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         if (node->node_num)
         {
             for (i = 0; i < node->node_num; ++i)
             {
-                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(TRIE_NODE_T *));
+                sdp_enstack(stack, (void *)(&node->node[i]), sizeof(SDP_TRIE_NODE_T *));
             }
         }
 

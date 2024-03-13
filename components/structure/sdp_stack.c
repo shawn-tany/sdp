@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mlt_stack.h"
+#include "sdp_stack.h"
 
 #define PTR_CHECK(p) {  \
     if (!p) {           \
@@ -10,11 +10,11 @@
     }                   \
 }
 
-mlt_stack_t *mlt_stack_create(int node_num, int node_size)
+sdp_stack_t *sdp_stack_create(int node_num, int node_size)
 {
-    mlt_stack_t *stack = NULL;
+    sdp_stack_t *stack = NULL;
 
-    stack = (mlt_stack_t *)malloc(sizeof(mlt_stack_t));
+    stack = (sdp_stack_t *)malloc(sizeof(sdp_stack_t));
 
     if (!stack) {
         return NULL;
@@ -38,7 +38,7 @@ mlt_stack_t *mlt_stack_create(int node_num, int node_size)
     return stack;
 }
 
-int mlt_enstack(mlt_stack_t *stack, void *node, int size)
+int sdp_enstack(sdp_stack_t *stack, void *node, int size)
 {
     PTR_CHECK(stack);
     PTR_CHECK(node);
@@ -67,7 +67,7 @@ int mlt_enstack(mlt_stack_t *stack, void *node, int size)
     return 0;
 }
 
-int mlt_destack(mlt_stack_t *stack, void *node, int size)
+int sdp_destack(sdp_stack_t *stack, void *node, int size)
 {
     PTR_CHECK(stack);
     PTR_CHECK(node);
@@ -96,7 +96,7 @@ int mlt_destack(mlt_stack_t *stack, void *node, int size)
     return 0;
 }
 
-int mlt_stack_top(mlt_stack_t *stack, void *node, int size)
+int sdp_stack_top(sdp_stack_t *stack, void *node, int size)
 {
     PTR_CHECK(stack);
     PTR_CHECK(node);
@@ -119,7 +119,7 @@ int mlt_stack_top(mlt_stack_t *stack, void *node, int size)
     return 0;
 }
 
-void mlt_stack_free(mlt_stack_t *stack)
+void sdp_stack_free(sdp_stack_t *stack)
 {
     if (stack) {
         if (stack->addr) {
@@ -141,7 +141,7 @@ void mlt_stack_free(mlt_stack_t *stack)
 #if 0
 int main()
 {
-    mlt_stack_t *stack = mlt_stack_create(100, sizeof(int));
+    sdp_stack_t *stack = sdp_stack_create(100, sizeof(int));
 
     if (!stack) {
         printf("faild to create stack\n");
@@ -157,47 +157,47 @@ int main()
 
     loop = start + 50;
     for (i = start; i < loop; ++i, ++start) {
-        if (mlt_enstack(stack, &i, sizeof(i))) {
+        if (sdp_enstack(stack, &i, sizeof(i))) {
             printf("failed to enstack\n");
             goto FAIL;
         }
     }
 
-    while (!mlt_destack(stack, &node, sizeof(node))) {
+    while (!sdp_destack(stack, &node, sizeof(node))) {
         printf("destack[%d] : %d\n", idex++, node);
     }
 
     loop = start + 100;
     for (i = start; i < loop; ++i, ++start) {
-        if (mlt_enstack(stack, &i, sizeof(i))) {
+        if (sdp_enstack(stack, &i, sizeof(i))) {
             printf("failed to enstack\n");
             goto FAIL;
         }
     }
 
-    while (!mlt_destack(stack, &node, sizeof(node))) {
+    while (!sdp_destack(stack, &node, sizeof(node))) {
         printf("destack[%d] : %d\n", idex++, node);
     }
 
     loop = start + 100;
     for (i = start; i < loop; ++i, ++start) {
-        if (mlt_enstack(stack, &i, sizeof(i))) {
+        if (sdp_enstack(stack, &i, sizeof(i))) {
             printf("failed to enstack\n");
             goto FAIL;
         }
     }
 
-    while (!mlt_destack(stack, &node, sizeof(node))) {
+    while (!sdp_destack(stack, &node, sizeof(node))) {
         printf("destack[%d] : %d\n", idex++, node);
     }
 
-    mlt_stack_free(stack);
+    sdp_stack_free(stack);
 
     return 0;
 
 FAIL :
 
-    mlt_stack_free(stack);
+    sdp_stack_free(stack);
 
     return -1;
 }

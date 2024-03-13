@@ -1,0 +1,30 @@
+#ifndef SDP_CLI
+#define SDP_CLI
+
+#define SDP_CLI_MAX_LINE_LEN  512
+#define SDP_CLI_MAX_PARAM_LEN 36
+#define SDP_CLI_MAX_PARAM_NUM 16
+
+typedef enum 
+{
+    SDP_CLI_CHARACTER_TYPE_COMPLECTION = 0,
+    SDP_CLI_CHARACTER_TYPE_EXECUTE,
+    SDP_CLI_CHARACTER_TYPE_HELP,
+    SDP_CLI_CHARACTER_TYPE_SEPARATE,
+    SDP_CLI_CHARACTER_TYPE_DELETE,
+    SDP_CLI_CHARACTER_TYPE_GENERAL,
+} SDP_CLI_CHARACTER_TYPE_T;
+
+typedef struct 
+{
+    struct 
+    {
+        char character[SDP_CLI_CHARACTER_TYPE_GENERAL];
+    } config;
+
+    char line[SDP_CLI_MAX_LINE_LEN];
+    char param[SDP_CLI_MAX_PARAM_NUM][SDP_CLI_MAX_PARAM_LEN];
+
+} SDP_CLI_T;
+
+#endif

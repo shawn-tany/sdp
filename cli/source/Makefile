@@ -1,14 +1,20 @@
 CC = gcc
 
-APP = cli
-
 SOURCE_DIR = $(PWD)
 ROOT_DIR = $(SOURCE_DIR)/../..
-BUILD_DIR = $(SOURCE_DIR)/../build
+COMPONENTS_DIR = $(ROOT_DIR)/components
+COMMON_DIR = $(ROOT_DIR)/common
 
-SRCS = $(SOURCE_DIR)/*.c
+APP = cli
 
-CFLAGS = -g
+BUILD_DIR = ../build
+
+SRCS  = $(SOURCE_DIR)/*.c
+SRCS += $(COMPONENTS_DIR)/structure/*.c
+
+CFLAGS  = -g
+CFLAGS += -I $(COMPONENTS_DIR)/structure
+
 
 ALL : compile_check compile
 

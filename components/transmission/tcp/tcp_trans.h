@@ -24,11 +24,9 @@ typedef struct
     char ethdev[MFTP_TCP_IPADDR_LEN];
 
     int sock;    
-    int max_sock;
 
     /* server accept socket */
     int client_sock[MFTP_TCP_MAX_CLIENT];
-    int client_sock_num;
 } MFTP_TCP_DESC_T;
 
 int tcp_init();

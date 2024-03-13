@@ -34,6 +34,6 @@ typedef struct
     char data[0];
 } MFTP_MSG_T;
 
-typedef int (*mftp_msg_handle_func)(void *);
+typedef void*(*mftp_msg_handle_func)(void *);
 
 #endif

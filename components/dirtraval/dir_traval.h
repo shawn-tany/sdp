@@ -1,8 +1,8 @@
 #ifndef DIR_TRAVAL
 #define DIR_TRAVAL
 
-#include "mlt_queue.h"
-#include "mlt_stack.h"
+#include "sdp_queue.h"
+#include "sdp_stack.h"
 
 #define FILE_NAME_SIZE (256)
 
@@ -19,8 +19,8 @@ typedef struct
     unsigned char  rsv:7;    
     unsigned short last_depth;
     
-    mlt_stack_t *stack;
-    mlt_queue_t *queue;
+    sdp_stack_t *stack;
+    sdp_queue_t *queue;
 } dir_ctx_t;
 
 typedef enum

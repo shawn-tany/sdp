@@ -9,12 +9,14 @@ APP = cli
 
 BUILD_DIR = ../build
 
-SRCS  = $(SOURCE_DIR)/*.c
+SRCS  = $(SOURCE_DIR)/main.c
+SRCS += $(SOURCE_DIR)/cli/*.c
 SRCS += $(COMPONENTS_DIR)/structure/*.c
 
 CFLAGS  = -g
+CFLAGS += -I $(COMMON_DIR)
 CFLAGS += -I $(COMPONENTS_DIR)/structure
-
+CFLAGS += -I $(SOURCE_DIR)/cli
 
 ALL : compile_check compile
 

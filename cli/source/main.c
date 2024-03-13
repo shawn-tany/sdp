@@ -1,8 +1,9 @@
-
-#include "stdio.h"
-#include "string.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "sdp_trie.h"
+#include "sdp_cli.h"
 
 static struct 
 {
@@ -74,6 +75,19 @@ int main()
 
     int pattern_len[32] = {0};
 
+    SDP_CLI_T *sdp_cli = NULL;
+    SDP_CLI_CONFIG_T sdp_cli_config = {0};
+
+    sdp_cli_config.fd = STDOUT_FILENO;
+
+    sdp_cli = cli_init(&sdp_cli_config);
+
+    if (!sdp_cli)
+    {
+        printf("sdp cli init failed\n");
+        return -1;
+    }
+
     root = sdp_trie_init(sdp_trie_strcmp);
     if (!root)
     {
@@ -125,6 +139,13 @@ int main()
     sdp_trie_each_entry_accord_hierarchy(root, sdp_trie_entry_print);
 
     sdp_trie_uinit(root);
+
+    while (1)
+    {
+        cli_machine(sdp_cli);
+    }
+
+    cli_exit(sdp_cli);
 
     return 0;
 }

@@ -40,6 +40,7 @@ typedef struct
 typedef int (*trans_init_func)(void *);
 typedef int (*trans_recv_func)(void *, void *);
 typedef int (*trans_send_func)(void *, void *);
+typedef int (*trans_work_func)(void *, void *);
 typedef int (*trans_uninit_func)(void *);
 
 typedef struct 
@@ -47,6 +48,7 @@ typedef struct
     trans_init_func trans_init;
     trans_recv_func trans_recv;
     trans_send_func trans_send;
+    trans_work_func trans_work;
     trans_uninit_func trans_uninit;
 } MFTP_TRANS_HANDLE_T;
 
@@ -57,6 +59,8 @@ int trans_init(MFTP_TRANS_DESC_T *trans_desc);
 int trans_recv(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg);
 
 int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg);
+
+int trans_work(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg);
 
 int trans_uninit(MFTP_TRANS_DESC_T *trans_desc);
 

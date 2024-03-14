@@ -66,6 +66,31 @@ int trans_send(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg)
     return ret;
 }
 
+int trans_work(MFTP_TRANS_DESC_T *trans_desc, MFTP_MSG_T *msg, mftp_msg_handle_func handle)
+{
+    PTR_CHECK_N1(trans_desc);    
+    PTR_CHECK_N1(msg);
+
+    if (MFTP_ROLE_SERVER == trans_type->relo)
+    {
+        trans_recv(trans_desc, msg);
+
+        
+
+        trans_send(trans_desc, msg);
+    }
+    else
+    {
+        trans_send(trans_desc, msg);
+
+        handle(msg);
+
+        trans_recv(trans_desc, msg);
+    }
+
+    return 0;
+}
+
 int trans_uninit(MFTP_TRANS_DESC_T *trans_desc)
 {
     PTR_CHECK_N1(trans_desc);    

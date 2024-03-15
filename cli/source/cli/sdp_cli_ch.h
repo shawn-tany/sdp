@@ -41,9 +41,9 @@ typedef struct
     SDP_CLI_CH_T ch[SDP_CLI_CH_SINGLE_GENERAL];
 } SDP_CLI_CHSET_T;
 
-int sdp_cli_ch_init(SDP_CLI_CHSET_T *cli_ch_set);
+int cli_ch_init(SDP_CLI_CHSET_T *cli_ch_set);
 
-int sdp_cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out);
+int cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out);
 
 #endif
 

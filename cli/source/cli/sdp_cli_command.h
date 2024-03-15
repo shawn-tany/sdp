@@ -18,8 +18,8 @@ typedef struct
     SDP_CLI_CMD_COMPLETE_T complete;
 } SDP_CLI_CMD_T;
 
-int sdp_cli_cmd_complete(SDP_CLI_CMD_T *sdp_cli_cmd);
+int cli_cmd_complete(SDP_CLI_CMD_T *sdp_cli_cmd);
 
-int sdp_cli_cmd_execute(SDP_CLI_CMD_T *sdp_cli_cmd);
+int cli_cmd_execute(SDP_CLI_CMD_T *sdp_cli_cmd);
 
 #endif

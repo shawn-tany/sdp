@@ -23,7 +23,7 @@ int main()
 
     sdp_cli_config(&cli_config);
     
-    sdp_cli = cli_init(&cli_config);
+    sdp_cli = sdp_cli_init(&cli_config);
 
     if (!sdp_cli)
     {
@@ -31,9 +31,9 @@ int main()
         return -1;
     }
 
-    cli_machine(sdp_cli);
+    sdp_cli_machine(sdp_cli);
 
-    cli_exit(sdp_cli);
+    sdp_cli_exit(sdp_cli);
 
     return 0;
 }

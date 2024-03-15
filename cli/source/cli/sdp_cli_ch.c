@@ -4,7 +4,7 @@
 #include "common.h"
 #include "sdp_cli_ch.h"
 
-static int sdp_cli_ch_single_register(SDP_CLI_CHSET_T *cli_ch_set,
+static int cli_ch_single_register(SDP_CLI_CHSET_T *cli_ch_set,
                                              SDP_CLI_CH_SINGLE_TYPE_T type, 
                                              SDP_CLI_CH_T ch_single)
 {
@@ -15,7 +15,7 @@ static int sdp_cli_ch_single_register(SDP_CLI_CHSET_T *cli_ch_set,
     return 0;
 }
 
-static int sdp_cli_ch_multi_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
+static int cli_ch_multi_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
 {
     PTR_CHECK_N1(cli_ch_set);
 
@@ -63,7 +63,7 @@ static int sdp_cli_ch_multi_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
     return SDP_CLI_CH_MULTI_NUM;
 }
 
-static int sdp_cli_ch_single_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
+static int cli_ch_single_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
 {
     PTR_CHECK_N1(cli_ch_set);
 
@@ -80,7 +80,7 @@ static int sdp_cli_ch_single_input(SDP_CLI_CHSET_T *cli_ch_set, char ch)
     return i;
 }
 
-int sdp_cli_ch_init(SDP_CLI_CHSET_T *cli_ch_set)
+int cli_ch_init(SDP_CLI_CHSET_T *cli_ch_set)
 {
     PTR_CHECK_N1(cli_ch_set);
 
@@ -88,28 +88,28 @@ int sdp_cli_ch_init(SDP_CLI_CHSET_T *cli_ch_set)
     
     /* tab */
     cli_ch.ch = 0x09; 
-    sdp_cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_COMPLECTION, cli_ch);
+    cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_COMPLECTION, cli_ch);
 
     /* enter */  
     cli_ch.ch = 0x0a;
-    sdp_cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_EXECUTE, cli_ch);
+    cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_EXECUTE, cli_ch);
 
     /* ? */ 
     cli_ch.ch = 0x3f;    
-    sdp_cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_HELP, cli_ch);
+    cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_HELP, cli_ch);
 
     /* whitespace */
     cli_ch.ch = 0x20; 
-    sdp_cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_SEPARATE, cli_ch);
+    cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_SEPARATE, cli_ch);
 
     /* backspace */
     cli_ch.ch = 0x08; 
-    sdp_cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_BACKSPACE, cli_ch);
+    cli_ch_single_register(cli_ch_set, SDP_CLI_CH_SINGLE_BACKSPACE, cli_ch);
 
     return 0;
 }
 
-int sdp_cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out)
+int cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out)
 {
     PTR_CHECK_N1(cli_ch_set);    
     PTR_CHECK_N1(ch_out);
@@ -119,7 +119,7 @@ int sdp_cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out)
 
     ch = getchar();
     
-    ret = sdp_cli_ch_multi_input(cli_ch_set, ch);
+    ret = cli_ch_multi_input(cli_ch_set, ch);
 
     if (0 <= ret)
     {
@@ -135,7 +135,7 @@ int sdp_cli_ch_input(SDP_CLI_CHSET_T *cli_ch_set, char *ch_out)
         }
     }
 
-    ret = sdp_cli_ch_single_input(cli_ch_set, ch);
+    ret = cli_ch_single_input(cli_ch_set, ch);
 
     if (0 <= ret)
     {

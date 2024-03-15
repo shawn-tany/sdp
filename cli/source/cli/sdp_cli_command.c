@@ -4,7 +4,7 @@
 #include "sdp_cli_command.h"
 #include "common.h"
 
-int sdp_cli_cmd_execute(SDP_CLI_CMD_T *sdp_cli_cmd)
+int cli_cmd_execute(SDP_CLI_CMD_T *sdp_cli_cmd)
 {
     PTR_CHECK_N1(sdp_cli_cmd);
 
@@ -13,7 +13,7 @@ int sdp_cli_cmd_execute(SDP_CLI_CMD_T *sdp_cli_cmd)
     return 0;
 }
 
-int sdp_cli_cmd_complete(SDP_CLI_CMD_T *sdp_cli_cmd)
+int cli_cmd_complete(SDP_CLI_CMD_T *sdp_cli_cmd)
 {
     PTR_CHECK_N1(sdp_cli_cmd);
 

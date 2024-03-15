@@ -18,6 +18,11 @@ int cli_prints(SDP_CLI_LINE_T *cli_line, char *string, int length)
     PTR_CHECK_N1(cli_line);
     PTR_CHECK_N1(string);
 
+    if (0 >= length)
+    {
+        return 0;
+    }
+
     return write(cli_line->fdout, string, length);
 }
 
@@ -56,6 +61,7 @@ int cli_enter_line(char *linehead, SDP_CLI_LINE_T *cli_line)
 
     cli_prints(cli_line, &ch, 1);
 
+    cli_line->his_line.buff[0] = 0;
     cli_line->his_line.length = 0;
 
     cli_print_line(linehead, cli_line);

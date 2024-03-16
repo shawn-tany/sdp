@@ -11,6 +11,7 @@
 
 CLI_LINE_T *cli_line_init(int fdout)
 {
+    int i = 0;
     CLI_LINE_T *cli_line = NULL;
 
     cli_line = (CLI_LINE_T *)malloc(sizeof(*cli_line));
@@ -19,9 +20,19 @@ CLI_LINE_T *cli_line_init(int fdout)
         return NULL;
     }
 
+    /* init cli line info */
     memset(cli_line, 0, sizeof(*cli_line));
     cli_line->fdout = fdout;
-    sdp_list_init(&cli_line->list);
+
+    /* init history line */
+    INIT_LIST_HEAD(&cli_line->history.list);
+    for (i = 0; i < ITEM(cli_line->history.line); ++i)
+    {
+        list_add_tail(&cli_line->history.list, &cli_line->history.line[i].head);
+    }
+
+    cli_line->history.pos = &cli_line->history.line[0];
+    cli_line->history.last = &cli_line->history.line[0];
 
     return cli_line;
 }
@@ -60,23 +71,11 @@ int cli_line_separate(CLI_LINE_T *cli_line)
 {
     PTR_CHECK_N1(cli_line);
 
-    int length = cli_line->cur_line.length;
-
-    if (length >= ITEM(cli_line->cur_line.buff))
-    {
-        return 0;
-    }
-
-    cli_line->cur_line.buff[length] = ' ';
-    
-    cli_line->cursor++;
-    cli_line->cur_line.length++;
-
-    cli_line_printc(cli_line, ' ');
+    /* insert a whitespace */
+    cli_line_insert(' ', cli_line);
 
     return 0;
 }
-
 
 int cli_line_backspace(CLI_LINE_T *cli_line)
 {
@@ -139,12 +138,13 @@ int cli_line_delete(CLI_LINE_T *cli_line)
     
         cli_line->cur_line.buff[i] = cli_line->cur_line.buff[i + 1];
     }
-
     cli_line->cur_line.length--;
 
+    /* updata display line */
     cli_line_prints(cli_line, LINE_STR_CURSOR(cli_line), LINE_LEN_CURSOR(cli_line));
     cli_line_prints(cli_line, " \b", 2);
 
+    /* recovery cursor */
     for (i = 0; i < LINE_LEN_CURSOR(cli_line); ++i)
     {
         cli_line_printc(cli_line, 0x1b);
@@ -154,7 +154,6 @@ int cli_line_delete(CLI_LINE_T *cli_line)
 
     return 0;
 }
-
 
 int cli_line_insert(char ch, CLI_LINE_T *cli_line)
 {
@@ -169,8 +168,10 @@ int cli_line_insert(char ch, CLI_LINE_T *cli_line)
         return 0;
     }
 
+    /* replace */
     if (CLI_LINE_INPUT_TYPE_REPLACE == cli_line->status.input_type)
     {
+        /* updata line buff */
         cli_line->cur_line.buff[line_cursor] = ch;
         cli_line->cursor++;
 
@@ -179,10 +180,13 @@ int cli_line_insert(char ch, CLI_LINE_T *cli_line)
             cli_line->cur_line.length++;
         }
 
+        /* updata display line */
         cli_line_printc(cli_line, ch);
     }
+    /* add */
     else
     {
+        /* move line characters forward */
         for (i = line_length; i > line_cursor; --i)
         {
             if (i >= (ITEM(cli_line->cur_line.buff)))
@@ -193,10 +197,12 @@ int cli_line_insert(char ch, CLI_LINE_T *cli_line)
             cli_line->cur_line.buff[i] = cli_line->cur_line.buff[i - 1];
         }
         
+        /* insert a character */
         cli_line->cur_line.buff[line_cursor] = ch;
         cli_line->cur_line.length++;    
         cli_line->cursor++;
 
+        /* updata display line */
         cli_line_printc(cli_line, ch);
         cli_line_prints(cli_line, LINE_STR_CURSOR(cli_line), LINE_LEN_CURSOR(cli_line));
 
@@ -218,6 +224,7 @@ int cli_line_replace(CLI_LINE_T *cli_line)
 
     int is_replace = (CLI_LINE_INPUT_TYPE_REPLACE == cli_line->status.input_type);
 
+    /* updata input type */
     cli_line->status.input_type = is_replace ? CLI_LINE_INPUT_TYPE_ADD : CLI_LINE_INPUT_TYPE_REPLACE;
     
     return 0;
@@ -285,12 +292,11 @@ int cli_line_clean(CLI_LINE_T *cli_line)
     PTR_CHECK_N1(cli_line);
 
     int i = 0;
+    int cursor = cli_line->cursor;
 
-    for (i = 0; i < cli_line->cursor; ++i)
+    for (i = 0; i < cursor; ++i)
     {
-        cli_line_printc(cli_line, 0x1b);
-        cli_line_printc(cli_line, 0x5b);
-        cli_line_printc(cli_line, 0x44);
+        cli_line_backspace(cli_line);
     }
 
     return 0;
@@ -319,16 +325,22 @@ int cli_line_new(char *linehead, CLI_LINE_T *cli_line)
     PTR_CHECK_N1(linehead);
     PTR_CHECK_N1(cli_line);
 
-    char ch = '\n';
-
+    /* show enter */
+    cli_line_printc(cli_line, '\n');
+    
+    /* add history line */
     cli_line_his_add(cli_line);
 
-    cli_line_prints(cli_line, &ch, 1);
+    /* reset history line pos */
+    cli_line_his_reset(cli_line);
 
+    /* reset line buff */
     cli_line_reset(cli_line);
 
+    /* show line */
     cli_line_print_line(linehead, cli_line);
 
+    /* reset line cursor */
     cli_line_cursor_reset(cli_line);
 
     return 0;
@@ -338,47 +350,60 @@ int cli_line_his_add(CLI_LINE_T *cli_line)
 {
     PTR_CHECK_N1(cli_line);
 
-    int his_index = 0;
-    SDP_CLI_LINE_CONTENT_T *new_his = NULL;
+    CLI_LINE_CONTENT_T *new = NULL;
+    CLI_LINE_CONTENT_T *new_pos = NULL;
+    CLI_LINE_CONTENT_T *last = NULL;
 
     if (!cli_line->cur_line.length)
     {
         return 0;
     }
 
-    if ((cli_line->his_pos && !strcmp(cli_line->his_pos->buff, cli_line->cur_line.buff)) &&
-        cli_line->his_pos->length == cli_line->cur_line.length)
+    last = cli_line->history.last;
+
+    /* same history line */
+    if (!strcmp(last->buff, cli_line->cur_line.buff) &&
+        last->length == cli_line->cur_line.length)
     {
         return 0;
     }
 
-    for (his_index = 0; his_index < ITEM(cli_line->his_line); ++his_index)
+    /* history empty */
+    if (!cli_line->history.number)
     {
-        if (!cli_line->his_line[his_index].length)
-        {
-            break;
-        }
+        new = cli_line->history.last;
     }
-
-    if (his_index >= ITEM(cli_line->his_line))
+    /* histroy full */
+    else if (ITEM(cli_line->history.line) <= cli_line->history.number)
     {
-        new_his = sdp_list_entry(cli_line->list.next, SDP_CLI_LINE_CONTENT_T, head);
-        if (new_his)
-        {
-            sdp_list_del(&(new_his->head));
-        }
+        /* get first */
+        new = list_first_entry(&cli_line->history.list, CLI_LINE_CONTENT_T, head);
+        
+        /* delete first */
+        list_del(&new->head);
+
+        /* add new history */
+        list_add_tail(&cli_line->history.list, &new->head);
+
+        cli_line->history.number--;
     }
     else
     {
-        new_his = &(cli_line->his_line[his_index]);
+        new = list_next_entry(last, head);
     }
 
-    memcpy(new_his, &(cli_line->cur_line), sizeof(*new_his));
+    cli_line->history.last = new;
 
-    sdp_list_add_tail(&(cli_line->list), &(new_his->head));
+    memcpy(new->buff, cli_line->cur_line.buff, sizeof(new->buff));
+    new->length = cli_line->cur_line.length;
 
-    cli_line->his_pos  = new_his;
-    cli_line->his_last = new_his;
+    /* jump list head */
+    new_pos = list_next_entry(last, head);
+    cli_line->history.pos = new_pos;
+
+    /* updata history number & cursor */
+    cli_line->history.number++;
+    cli_line->history.cursor = cli_line->history.number + 1;
 
     return 0;
 }
@@ -388,18 +413,43 @@ int cli_line_his_prev(char *linehead, CLI_LINE_T *cli_line)
     PTR_CHECK_N1(linehead);
     PTR_CHECK_N1(cli_line);
 
-    if (!cli_line->his_pos || !cli_line->his_pos->length)
+    /* empty */
+    if (!cli_line->history.number)
     {
         return 0;
     }
 
+    /* is first */
+    if (1 >= cli_line->history.cursor)
+    {
+        return 0;
+    }
+
+    /* will last */
+    if (cli_line->history.number < cli_line->history.cursor)
+    {
+        /* record cache line */
+        memcpy(cli_line->cache_line.buff, cli_line->cur_line.buff, sizeof(ITEM(cli_line->cache_line.buff)));
+        cli_line->cache_line.length = cli_line->cur_line.length;
+
+        cli_line->history.pos = cli_line->history.last;
+    }
+    else
+    {
+        cli_line->history.pos = list_prev_entry(cli_line->history.pos, head);
+    }
+
+    /* clean display and buff, should be execute after save current to cache */
     cli_line_clean(cli_line);
 
-    cli_line_prints(cli_line, cli_line->his_pos->buff, cli_line->his_pos->length);
+    cli_line->history.cursor--;
 
-    cli_line->cursor = cli_line->his_pos->length;
+    memcpy(cli_line->cur_line.buff, cli_line->history.pos->buff, sizeof(ITEM(cli_line->cur_line.buff)));
+    cli_line->cur_line.length = cli_line->history.pos->length;
 
-    cli_line->his_pos = sdp_list_entry(cli_line->his_pos->head.prev, SDP_CLI_LINE_CONTENT_T, head);
+    cli_line_prints(cli_line, cli_line->cur_line.buff, cli_line->cur_line.length);
+
+    cli_line->cursor = cli_line->cur_line.length;
 
     return 0;
 }
@@ -409,23 +459,51 @@ int cli_line_his_next(char *linehead, CLI_LINE_T *cli_line)
     PTR_CHECK_N1(linehead);
     PTR_CHECK_N1(cli_line);
 
-    if (!cli_line->his_pos)
+    CLI_LINE_CONTENT_T *show = NULL;
+
+    /* empty */
+    if (!cli_line->history.number)
     {
         return 0;
     }
-    
+
+    /* is cache */
+    if (cli_line->history.number < cli_line->history.cursor)
+    {
+        return 0;
+    }
+
+    /* is last */
+    if (cli_line->history.number == cli_line->history.cursor)
+    {
+        show = &cli_line->cache_line;
+    }
+    else
+    {
+        cli_line->history.pos = list_next_entry(cli_line->history.pos, head);
+        cli_line->history.cursor++;
+
+        show = cli_line->history.pos;
+    }
+
+    /* clean display and buff, should be execute after save current to cache */
     cli_line_clean(cli_line);
 
-    cli_line->his_pos = sdp_list_entry(cli_line->his_pos->head.next, SDP_CLI_LINE_CONTENT_T, head);
+    memcpy(cli_line->cur_line.buff, show->buff, sizeof(ITEM(cli_line->cur_line.buff)));
+    cli_line->cur_line.length = show->length;
 
-    if (!cli_line->his_pos || !cli_line->his_pos->length)
-    {
-        return 0;
-    }
+    cli_line_prints(cli_line, cli_line->cur_line.buff, cli_line->cur_line.length);
 
-    cli_line_prints(cli_line, cli_line->his_pos->buff, cli_line->his_pos->length);
+    cli_line->cursor = cli_line->cur_line.length;
 
-    cli_line->cursor = cli_line->his_pos->length;
+    return 0;
+}
+
+int cli_line_his_reset(CLI_LINE_T *cli_line)
+{
+    PTR_CHECK_N1(cli_line);
+
+    cli_line->history.pos = cli_line->history.last;
 
     return 0;
 }

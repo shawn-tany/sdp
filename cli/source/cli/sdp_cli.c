@@ -227,8 +227,10 @@ SDP_CLI_T *sdp_cli_init(SDP_CLI_CONFIG_T *sdp_cli_config)
     PTR_CHECK_NULL(sdp_cli_config);
 
     SDP_CLI_T *sdp_cli = NULL;
-    SDP_CLI_CHSET_T cli_ch_set = {0};
+    SDP_CLI_CHSET_T cli_ch_set;
     struct termios termios;
+
+    memset(&cli_ch_set, 0, sizeof(cli_ch_set));
 
     sdp_cli = (SDP_CLI_T *)malloc(sizeof(SDP_CLI_T));
     if (!sdp_cli)

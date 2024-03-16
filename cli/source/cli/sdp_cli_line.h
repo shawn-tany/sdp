@@ -1,7 +1,7 @@
 #ifndef SDP_CLI_LINE
 #define SDP_CLI_LINE
 
-#include "sdp_list.h"
+#include "list.h"
 
 #define CLI_MAX_LINE_LEN     512
 #define CLI_MAX_LINE_HIS_NUM 36
@@ -19,22 +19,30 @@ typedef struct
 
 typedef struct 
 {
-    sdp_list_t head;
+    struct list_head head;
     char buff[CLI_MAX_LINE_LEN];
     int  length;
-} SDP_CLI_LINE_CONTENT_T;
+} CLI_LINE_CONTENT_T;
+
+typedef struct 
+{
+    struct list_head list;
+    int number;
+    int cursor;
+    CLI_LINE_CONTENT_T  line[CLI_MAX_LINE_HIS_NUM];
+    CLI_LINE_CONTENT_T *pos;
+    CLI_LINE_CONTENT_T *last;
+} CLI_LINE_HISTORY_T;
 
 typedef struct
 {
-    int  cursor;
     int  fdout;
+    int  cursor;
     int  replace;
-    sdp_list_t list;    
-    CLI_LINE_STATUS_T status;
-    SDP_CLI_LINE_CONTENT_T  his_line[CLI_MAX_LINE_HIS_NUM];
-    SDP_CLI_LINE_CONTENT_T *his_pos;
-    SDP_CLI_LINE_CONTENT_T *his_last;
-    SDP_CLI_LINE_CONTENT_T  cur_line;
+    CLI_LINE_STATUS_T   status;
+    CLI_LINE_HISTORY_T  history;
+    CLI_LINE_CONTENT_T  cur_line;
+    CLI_LINE_CONTENT_T  cache_line;
 } CLI_LINE_T;
 
 CLI_LINE_T *cli_line_init(int fdout);
@@ -75,5 +83,7 @@ int cli_line_his_add(CLI_LINE_T *cli_line);
 int cli_line_his_prev(char *linehead, CLI_LINE_T *cli_line);
 
 int cli_line_his_next(char *linehead, CLI_LINE_T *cli_line);
+
+int cli_line_his_reset(CLI_LINE_T *cli_line);
 
 #endif

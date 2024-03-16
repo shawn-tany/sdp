@@ -9,6 +9,19 @@
 #define LINE_STR_CURSOR(line) ((line)->cur_line.buff + (line)->cursor)
 #define LINE_LEN_CURSOR(line) ((line)->cur_line.length - (line)->cursor)
 
+static int cli_line_content_buff_end(CLI_LINE_CONTENT_T *content)
+{
+    PTR_CHECK_N1(content);
+
+    int buff_end = 0;
+
+    buff_end = ((content->length >= ITEM(content->buff)) ? (ITEM(content->buff) - 1) : content->length);
+
+    content->buff[buff_end] = 0;
+
+    return 0;
+}
+
 CLI_LINE_T *cli_line_init(int fdout)
 {
     int i = 0;
@@ -102,6 +115,7 @@ int cli_line_backspace(CLI_LINE_T *cli_line)
         cli_line->cur_line.buff[i] = cli_line->cur_line.buff[i + 1];
     }
     cli_line->cur_line.length--;
+    cli_line_content_buff_end(&cli_line->cur_line);
 
     /* updata display line */
     cli_line_printc(cli_line, '\b');
@@ -139,6 +153,7 @@ int cli_line_delete(CLI_LINE_T *cli_line)
         cli_line->cur_line.buff[i] = cli_line->cur_line.buff[i + 1];
     }
     cli_line->cur_line.length--;
+    cli_line_content_buff_end(&cli_line->cur_line);
 
     /* updata display line */
     cli_line_prints(cli_line, LINE_STR_CURSOR(cli_line), LINE_LEN_CURSOR(cli_line));
@@ -173,11 +188,14 @@ int cli_line_insert(char ch, CLI_LINE_T *cli_line)
     {
         /* updata line buff */
         cli_line->cur_line.buff[line_cursor] = ch;
+
+        /* updata cursor */
         cli_line->cursor++;
 
         if (cli_line->cursor >= cli_line->cur_line.length)
         {            
             cli_line->cur_line.length++;
+            cli_line_content_buff_end(&cli_line->cur_line);
         }
 
         /* updata display line */
@@ -200,6 +218,9 @@ int cli_line_insert(char ch, CLI_LINE_T *cli_line)
         /* insert a character */
         cli_line->cur_line.buff[line_cursor] = ch;
         cli_line->cur_line.length++;    
+        cli_line_content_buff_end(&cli_line->cur_line);
+        
+        /* updata cursor */
         cli_line->cursor++;
 
         /* updata display line */
@@ -397,7 +418,6 @@ int cli_line_his_add(CLI_LINE_T *cli_line)
     memcpy(new->buff, cli_line->cur_line.buff, sizeof(new->buff));
     new->length = cli_line->cur_line.length;
 
-    /* jump list head */
     new_pos = list_next_entry(last, head);
     cli_line->history.pos = new_pos;
 
@@ -412,6 +432,9 @@ int cli_line_his_prev(char *linehead, CLI_LINE_T *cli_line)
 {
     PTR_CHECK_N1(linehead);
     PTR_CHECK_N1(cli_line);
+
+    int i = 0;
+    CLI_LINE_CONTENT_T *show = NULL;
 
     /* empty */
     if (!cli_line->history.number)
@@ -439,17 +462,17 @@ int cli_line_his_prev(char *linehead, CLI_LINE_T *cli_line)
         cli_line->history.pos = list_prev_entry(cli_line->history.pos, head);
     }
 
+    cli_line->history.cursor--;
+
+    show = cli_line->history.pos;
+
     /* clean display and buff, should be execute after save current to cache */
     cli_line_clean(cli_line);
 
-    cli_line->history.cursor--;
-
-    memcpy(cli_line->cur_line.buff, cli_line->history.pos->buff, sizeof(ITEM(cli_line->cur_line.buff)));
-    cli_line->cur_line.length = cli_line->history.pos->length;
-
-    cli_line_prints(cli_line, cli_line->cur_line.buff, cli_line->cur_line.length);
-
-    cli_line->cursor = cli_line->cur_line.length;
+    for (i = 0; i < show->length; ++i)
+    {
+        cli_line_insert(show->buff[i], cli_line);
+    }
 
     return 0;
 }
@@ -459,6 +482,7 @@ int cli_line_his_next(char *linehead, CLI_LINE_T *cli_line)
     PTR_CHECK_N1(linehead);
     PTR_CHECK_N1(cli_line);
 
+    int i = 0;
     CLI_LINE_CONTENT_T *show = NULL;
 
     /* empty */
@@ -473,28 +497,26 @@ int cli_line_his_next(char *linehead, CLI_LINE_T *cli_line)
         return 0;
     }
 
+    cli_line->history.cursor++;
+
     /* is last */
-    if (cli_line->history.number == cli_line->history.cursor)
+    if ((cli_line->history.number + 1) == cli_line->history.cursor)
     {
         show = &cli_line->cache_line;
     }
     else
     {
         cli_line->history.pos = list_next_entry(cli_line->history.pos, head);
-        cli_line->history.cursor++;
-
         show = cli_line->history.pos;
     }
 
     /* clean display and buff, should be execute after save current to cache */
     cli_line_clean(cli_line);
 
-    memcpy(cli_line->cur_line.buff, show->buff, sizeof(ITEM(cli_line->cur_line.buff)));
-    cli_line->cur_line.length = show->length;
-
-    cli_line_prints(cli_line, cli_line->cur_line.buff, cli_line->cur_line.length);
-
-    cli_line->cursor = cli_line->cur_line.length;
+    for (i = 0; i < show->length; ++i)
+    {
+        cli_line_insert(show->buff[i], cli_line);
+    }
 
     return 0;
 }
@@ -502,8 +524,11 @@ int cli_line_his_next(char *linehead, CLI_LINE_T *cli_line)
 int cli_line_his_reset(CLI_LINE_T *cli_line)
 {
     PTR_CHECK_N1(cli_line);
+    
+    cli_line->history.pos = list_next_entry(cli_line->history.last, head);
 
-    cli_line->history.pos = cli_line->history.last;
+    /* updata history number & cursor */
+    cli_line->history.cursor = cli_line->history.number + 1;
 
     return 0;
 }

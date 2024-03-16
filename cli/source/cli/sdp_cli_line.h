@@ -4,7 +4,7 @@
 #include "list.h"
 
 #define CLI_MAX_LINE_LEN     512
-#define CLI_MAX_LINE_HIS_NUM 36
+#define CLI_MAX_LINE_HIS_NUM 3
 
 typedef enum 
 {

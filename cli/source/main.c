@@ -4,7 +4,7 @@
 
 #include "sdp_cli.h"
 
-static int sdp_cli_config(SDP_CLI_CONFIG_T *cli_config)
+static int sdp_cli_config(CLI_CONFIG_T *cli_config)
 {
     PTR_CHECK_N1(cli_config);
 
@@ -19,7 +19,7 @@ static int sdp_cli_config(SDP_CLI_CONFIG_T *cli_config)
 int main()
 {
     SDP_CLI_T *sdp_cli = NULL;
-    SDP_CLI_CONFIG_T cli_config = {0};
+    CLI_CONFIG_T cli_config = {0};
 
     sdp_cli_config(&cli_config);
     

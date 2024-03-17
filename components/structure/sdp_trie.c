@@ -139,8 +139,8 @@ SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *patt
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
         {
             /* exist */
-            if (root->cmp(pattern[pattern_idx], pattern_len[pattern_idx], 
-                            search->node[node_idx]->data, search->node[node_idx]->data_len))
+            if (!(root->cmp(pattern[pattern_idx], pattern_len[pattern_idx], 
+                            search->node[node_idx]->data, search->node[node_idx]->data_len)))
             {
                 /* updata search */
                 search = search->node[node_idx];

@@ -97,8 +97,8 @@ int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
         {
             /* exist */
-            if (root->cmp.cmp_insert(pattern[pattern_idx], pattern_len[pattern_idx], 
-                            search->node[node_idx]->data, search->node[node_idx]->data_len))
+            if (!(root->cmp.cmp_insert(pattern[pattern_idx], pattern_len[pattern_idx], 
+                            search->node[node_idx]->data, search->node[node_idx]->data_len)))
             {
                 /* updata search */
                 search = search->node[node_idx];
@@ -193,9 +193,10 @@ SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int 
 
     int pattern_idx = 0;
     int node_idx    = 0;
-    int search_flag = 0;
+    int search_num  = 0;
 
     SDP_TRIE_NODE_T *search = &root->root;
+    SDP_TRIE_NODE_T *tmp = NULL;
 
     for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
     {
@@ -205,7 +206,7 @@ SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int 
             return NULL;
         }
 
-        search_flag = 0;
+        search_num = 0;
 
         /* search node */
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
@@ -217,25 +218,29 @@ SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int 
                             search->node[node_idx]->data, search->node[node_idx]->data_len)))
                 {
                     /* updata search */
-                    search_flag = 1;
+                    search_num++;
+                    tmp = search->node[node_idx];
                 }
             }
             else
             {
-                if ((root->cmp.cmp_found_flex(pattern[pattern_idx], pattern_len[pattern_idx], 
+                if (!(root->cmp.cmp_found_flex(pattern[pattern_idx], pattern_len[pattern_idx], 
                             search->node[node_idx]->data, search->node[node_idx]->data_len)))
                 {
                     /* updata search */
                     search = search->node[node_idx];
-                    search_flag = 1;
                 }
             }
         }
     }
 
-    if (!search_flag)
+    if (!search_num)
     {
         return NULL;
+    }
+    else if (1 == search_num)
+    {
+        search = tmp;
     }
 
     return search;

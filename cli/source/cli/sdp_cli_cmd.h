@@ -17,6 +17,7 @@ typedef struct
     char *buff_ptr[CLI_CMD_MAX_PARAM_NUM];
     int   num;
     int   separate;
+    int   enter;
 } CLI_CMD_COMPLETE_T;
 
 typedef struct 

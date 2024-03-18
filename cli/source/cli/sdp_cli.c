@@ -116,13 +116,13 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
 
     cli_cmd_complete(sdp_cli->cmds, sdp_cli->line->cur_line.buff);
 
-    if (!sdp_cli->cmds->complete.num)
+    if (!sdp_cli->cmds->complete.num && !sdp_cli->cmds->complete.enter)
     {
         snprintf(buff, sizeof(buff), "\n\tERROR : No such command : %s", sdp_cli->line->cur_line.buff);
         cli_line_prints(sdp_cli->line, buff, strlen(buff));
         return -1;
     }
-    else if (1 == sdp_cli->cmds->complete.num)
+    else if (1 == sdp_cli->cmds->complete.num && !sdp_cli->cmds->complete.enter)
     {
         if (sdp_cli->cmds->complete.separate)
         {
@@ -143,8 +143,10 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
             snprintf(buff, sizeof(buff), "\t %s", sdp_cli->cmds->complete.buff[i]);
             cli_line_prints(sdp_cli->line, buff, strlen(buff));
         }
+
+        cli_line_printc(sdp_cli->line, '\n');
         
-        cli_line_new(sdp_cli->config.rowhead, sdp_cli->line);
+        cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
     }
 
     return 0;

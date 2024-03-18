@@ -184,7 +184,7 @@ SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *patt
     return search;
 }
 
-SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
+SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, int fuzz_flag)
 {
     if (!root || !pattern || !pattern_len)
     {
@@ -197,6 +197,17 @@ SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int 
 
     SDP_TRIE_NODE_T *search = &root->root;
     SDP_TRIE_NODE_T *tmp = NULL;
+
+    sdp_trie_cmp_func_t last_cmp;
+
+    if (!fuzz_flag)
+    {
+        last_cmp = root->cmp.cmp_found_flex;
+    }
+    else 
+    {
+        last_cmp = root->cmp.cmp_found_fuzz;
+    }
 
     for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
     {
@@ -212,9 +223,9 @@ SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int 
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
         {
             /* last shoud be fuzz */
-            if (pattern_idx >= (ele_num - 1))
+            if ((pattern_idx >= (ele_num - 1)))
             {
-                if (!(root->cmp.cmp_found_fuzz(pattern[pattern_idx], pattern_len[pattern_idx], 
+                if (!(last_cmp(pattern[pattern_idx], pattern_len[pattern_idx], 
                             search->node[node_idx]->data, search->node[node_idx]->data_len)))
                 {
                     /* updata search */

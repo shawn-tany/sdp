@@ -144,6 +144,12 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
             cli_line_prints(sdp_cli->line, buff, strlen(buff));
         }
 
+        if (sdp_cli->cmds->complete.enter)
+        {
+            snprintf(buff, sizeof(buff), "\t Enter");
+            cli_line_prints(sdp_cli->line, buff, strlen(buff));
+        }
+
         cli_line_printc(sdp_cli->line, '\n');
         
         cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);

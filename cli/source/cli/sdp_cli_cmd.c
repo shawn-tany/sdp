@@ -98,6 +98,12 @@ static int cli_cmd_parse(CLI_CMD_T *cli_cmd, char *cmdstr)
     int   param_num = 0;
     
     cli_cmd->param.num = 0;
+    cli_cmd->param.separate = 0;
+
+    while (*param == ' ')
+    {
+        param++;
+    }
         
     while (1)
     {
@@ -133,6 +139,11 @@ static int cli_cmd_parse(CLI_CMD_T *cli_cmd, char *cmdstr)
             param++;
         }
     } 
+
+    if (' ' == cmdstr[strlen(cmdstr) - 1])
+    {
+        cli_cmd->param.separate = 1;
+    }
 
     return 0;
 }
@@ -215,12 +226,13 @@ int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
     cli_cmd->complete.enter    = 0;
     cli_cmd->complete.separate = 0;
 
-    if (strlen(cmdstr))
+    if (cli_cmd->param.num)
     {
         trie_node = sdp_trie_found_fuzz(cli_cmd->cmd_trie, 
                                     (void **)(cli_cmd->param.buff_ptr), 
                                     cli_cmd->param.len, 
-                                    cli_cmd->param.num);
+                                    cli_cmd->param.num,
+                                    !cli_cmd->param.separate);
 
         if (!trie_node)
         {

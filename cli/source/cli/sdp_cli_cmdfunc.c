@@ -58,6 +58,10 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_NEW;
     CLI_CMD_ADD("aaa", "aaatest");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("bbb", "bbbtest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
     
     CLI_CMD_END;
 

@@ -8,6 +8,11 @@
 /* insert a new node, and update root node */
 static int sdp_trie_new_node(SDP_TRIE_NODE_T **root, void *data, int size)
 {
+    if (!root || !data)
+    {
+        return -1;
+    }
+
     int idx = (*root)->node_num;
 
     /* create new node */
@@ -33,10 +38,15 @@ static int sdp_trie_new_node(SDP_TRIE_NODE_T **root, void *data, int size)
 
 int sdp_trie_strcmp(const void *src, int src_size, const void *dst, int dst_size)
 {
-    return (src_size == dst_size && !strncmp((char *)src, (char *)dst, src_size));
+    if (!src || !dst)
+    {
+        return -1;
+    }
+
+    return !(src_size == dst_size && !strncmp((char *)src, (char *)dst, src_size));
 }
 
-SDP_TRIE_ROOT_T *sdp_trie_init(sdp_trie_cmp_func_t cmp)
+SDP_TRIE_ROOT_T *sdp_trie_init(SDP_TRIE_CMP_T cmpset)
 {
     SDP_TRIE_ROOT_T *root = NULL;
 
@@ -48,7 +58,7 @@ SDP_TRIE_ROOT_T *sdp_trie_init(sdp_trie_cmp_func_t cmp)
     }
     memset(root, 0, sizeof(*root));
 
-    root->cmp = cmp;
+    root->cmp = cmpset;
     root->root.depth = 0;
 
     return root;
@@ -56,6 +66,11 @@ SDP_TRIE_ROOT_T *sdp_trie_init(sdp_trie_cmp_func_t cmp)
 
 int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, sdp_trie_entry_handle_func_t func)
 {
+    if (!root || !pattern || !pattern_len)
+    {
+        return -1;
+    }
+
     int pattern_idx = 0;
     int node_idx    = 0;
     int search_flag = 0;
@@ -82,7 +97,7 @@ int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
         {
             /* exist */
-            if (root->cmp(pattern[pattern_idx], pattern_len[pattern_idx], 
+            if (root->cmp.cmp_insert(pattern[pattern_idx], pattern_len[pattern_idx], 
                             search->node[node_idx]->data, search->node[node_idx]->data_len))
             {
                 /* updata search */
@@ -119,6 +134,11 @@ int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int
 
 SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
 {
+    if (!root || !pattern || !pattern_len)
+    {
+        return NULL;
+    }
+
     int pattern_idx = 0;
     int node_idx    = 0;
     int search_flag = 0;
@@ -139,7 +159,7 @@ SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *patt
         for (node_idx = 0; node_idx < search->node_num; ++node_idx)
         {
             /* exist */
-            if (!(root->cmp(pattern[pattern_idx], pattern_len[pattern_idx], 
+            if (!(root->cmp.cmp_found_flex(pattern[pattern_idx], pattern_len[pattern_idx], 
                             search->node[node_idx]->data, search->node[node_idx]->data_len)))
             {
                 /* updata search */
@@ -164,8 +184,70 @@ SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *patt
     return search;
 }
 
+SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
+{
+    if (!root || !pattern || !pattern_len)
+    {
+        return NULL;
+    }
+
+    int pattern_idx = 0;
+    int node_idx    = 0;
+    int search_flag = 0;
+
+    SDP_TRIE_NODE_T *search = &root->root;
+
+    for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
+    {
+        /* not any node */
+        if (!search->node_num)
+        {
+            return NULL;
+        }
+
+        search_flag = 0;
+
+        /* search node */
+        for (node_idx = 0; node_idx < search->node_num; ++node_idx)
+        {
+            /* last shoud be fuzz */
+            if (pattern_idx >= (ele_num - 1))
+            {
+                if (!(root->cmp.cmp_found_fuzz(pattern[pattern_idx], pattern_len[pattern_idx], 
+                            search->node[node_idx]->data, search->node[node_idx]->data_len)))
+                {
+                    /* updata search */
+                    search_flag = 1;
+                }
+            }
+            else
+            {
+                if ((root->cmp.cmp_found_flex(pattern[pattern_idx], pattern_len[pattern_idx], 
+                            search->node[node_idx]->data, search->node[node_idx]->data_len)))
+                {
+                    /* updata search */
+                    search = search->node[node_idx];
+                    search_flag = 1;
+                }
+            }
+        }
+    }
+
+    if (!search_flag)
+    {
+        return NULL;
+    }
+
+    return search;
+}
+
 int sdp_trie_child_entry(SDP_TRIE_NODE_T *root, sdp_trie_entry_handle_func_t func)
 {
+    if (!root)
+    {
+        return -1;
+    }
+
     int child_idx = 0; 
 
     for (child_idx = 0; child_idx < root->node_num; ++child_idx)
@@ -189,6 +271,11 @@ int sdp_trie_child_entry(SDP_TRIE_NODE_T *root, sdp_trie_entry_handle_func_t fun
 
 int sdp_trie_path_entry(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func)
 {
+    if (!root)
+    {
+        return -1;
+    }
+
     int i   = 0;
     int ret = 0;
 
@@ -244,6 +331,11 @@ int sdp_trie_path_entry(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func
 
 int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
 {
+    if (!root)
+    {
+        return -1;
+    }
+
     int i   = 0;
     int ret = 0;
 
@@ -312,6 +404,11 @@ int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
 
 int sdp_trie_each_entry_accord_hierarchy(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func)
 {
+    if (!root)
+    {
+        return -1;
+    }
+
     int i   = 0;
     int ret = 0;
 
@@ -364,6 +461,11 @@ int sdp_trie_each_entry_accord_hierarchy(SDP_TRIE_ROOT_T *root, sdp_trie_entry_h
 
 int sdp_trie_uinit(SDP_TRIE_ROOT_T *root)
 {
+    if (!root)
+    {
+        return -1;
+    }
+
     int i = 0;
 
     sdp_stack_t *stack = NULL;

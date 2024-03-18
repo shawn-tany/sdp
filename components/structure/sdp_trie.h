@@ -23,20 +23,29 @@ typedef struct sdp_trie_node
     char data[0];
 } SDP_TRIE_NODE_T;
 
+typedef struct 
+{
+    sdp_trie_cmp_func_t cmp_insert;
+    sdp_trie_cmp_func_t cmp_found_flex;
+    sdp_trie_cmp_func_t cmp_found_fuzz;
+} SDP_TRIE_CMP_T;
+
 typedef struct sdp_trie_root
 {
     SDP_TRIE_NODE_T root;
-    sdp_trie_cmp_func_t cmp;
+    SDP_TRIE_CMP_T  cmp;
     int total_node_num;
 } SDP_TRIE_ROOT_T;
 
 int sdp_trie_strcmp(const void *src, int src_size, const void *dst, int dst_size);
 
-SDP_TRIE_ROOT_T *sdp_trie_init(sdp_trie_cmp_func_t cmp);
+SDP_TRIE_ROOT_T *sdp_trie_init(SDP_TRIE_CMP_T cmpset);
 
 int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, sdp_trie_entry_handle_func_t func);
 
 SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num);
+
+SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num);
 
 int sdp_trie_child_entry(SDP_TRIE_NODE_T *root, sdp_trie_entry_handle_func_t func);
 

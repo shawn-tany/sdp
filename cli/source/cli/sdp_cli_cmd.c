@@ -97,8 +97,7 @@ static int cli_cmd_parse(CLI_CMD_T *cli_cmd, char *cmdstr)
     int   param_len = 0;
     int   param_num = 0;
     
-    cli_cmd->param.num = 0;
-    cli_cmd->param.separate = 0;
+    memset(&cli_cmd->param, 0, sizeof(cli_cmd->param));
 
     while (*param == ' ')
     {
@@ -300,6 +299,14 @@ int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
 
             if (cli_cmd->param.num && strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, cli_cmd->param.len[last_param_index]))
             {
+                continue;
+            }
+
+            if (complete_node->tail_flag && 
+                !strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, cmd_node->buff_len) &&
+                cli_cmd->param.len[last_param_index] == cmd_node->buff_len)
+            {
+                cli_cmd->complete.enter = 1;
                 continue;
             }
 

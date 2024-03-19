@@ -90,6 +90,26 @@ int cli_line_separate(CLI_LINE_T *cli_line)
     return 0;
 }
 
+int cli_line_enter(CLI_LINE_T *cli_line)
+{
+    PTR_CHECK_N1(cli_line);
+
+    /* insert a whitespace */
+    cli_line_printc(cli_line, '\n');
+
+    return 0;
+}
+
+int cli_line_tab(CLI_LINE_T *cli_line)
+{
+    PTR_CHECK_N1(cli_line);
+
+    /* insert a whitespace */
+    cli_line_printc(cli_line, '\t');
+
+    return 0;
+}
+
 int cli_line_backspace(CLI_LINE_T *cli_line)
 {
     PTR_CHECK_N1(cli_line);
@@ -347,7 +367,7 @@ int cli_line_new(char *linehead, CLI_LINE_T *cli_line)
     PTR_CHECK_N1(cli_line);
 
     /* show enter */
-    cli_line_printc(cli_line, '\n');
+    cli_line_enter(cli_line);
     
     /* add history line */
     cli_line_his_add(cli_line);

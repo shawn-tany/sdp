@@ -213,6 +213,11 @@ int cli_cmd_execute(CLI_CMD_T *cli_cmd, char *cmdstr)
     SDP_TRIE_NODE_T *trie_node = NULL;
 
     cli_cmd_parse(cli_cmd, cmdstr);
+
+    if (!cli_cmd->param.num)
+    {
+        return 0;
+    }
     
     trie_node = sdp_trie_found(cli_cmd->cmd_trie, 
                                (void **)(cli_cmd->param.buff_ptr), 

@@ -115,6 +115,10 @@ CLI_CHSET_T *cli_ch_init(void)
     cli_ch.ch = 0x08; 
     cli_ch_single_register(cli_ch_set, CLI_CH_SINGLE_BACKSPACE, cli_ch);
 
+    /* backspace */
+    cli_ch.ch = 0x7f; 
+    cli_ch_single_register(cli_ch_set, CLI_CH_SINGLE_DELETE, cli_ch);
+
     return cli_ch_set;
 }
 
@@ -164,6 +168,7 @@ int cli_ch_input(CLI_CHSET_T *cli_ch_set, char *ch_out)
             case CLI_CH_SINGLE_HELP :
             case CLI_CH_SINGLE_SEPARATE :
             case CLI_CH_SINGLE_BACKSPACE :
+            case CLI_CH_SINGLE_DELETE :
             case CLI_CH_SINGLE_ESCAPE :
                 return CLI_CH_SINGLE(ret);
             

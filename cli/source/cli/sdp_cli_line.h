@@ -56,6 +56,10 @@ int cli_line_prints(CLI_LINE_T *cli_line, char *string, int length);
 
 int cli_line_separate(CLI_LINE_T *cli_line);
 
+int cli_line_enter(CLI_LINE_T *cli_line);
+
+int cli_line_tab(CLI_LINE_T *cli_line);
+
 int cli_line_backspace(CLI_LINE_T *cli_line);
 
 int cli_line_delete(CLI_LINE_T *cli_line);

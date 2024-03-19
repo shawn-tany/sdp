@@ -100,7 +100,13 @@ static int sdp_cli_execute(SDP_CLI_T *sdp_cli)
 {
     PTR_CHECK_N1(sdp_cli);
 
-    cli_cmd_execute(sdp_cli->cmds, sdp_cli->line->cur_line.buff);
+    if (-1 == cli_cmd_execute(sdp_cli->cmds, sdp_cli->line->cur_line.buff))
+    {
+        cli_line_enter(sdp_cli->line);
+        cli_line_tab(sdp_cli->line);
+        cli_line_prints(sdp_cli->line, "ERROR : No such command : ", strlen("ERROR : No such command : "));
+        cli_line_prints(sdp_cli->line, sdp_cli->line->cur_line.buff, sdp_cli->line->cur_line.length);
+    }
 
     cli_line_new(sdp_cli->config.rowhead, sdp_cli->line);
     
@@ -112,7 +118,6 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
     PTR_CHECK_N1(sdp_cli);
 
     int i = 0;
-    char buff[CLI_MAX_LINE_LEN + 36] = {0};
 
     cli_cmd_complete(sdp_cli->cmds, sdp_cli->line->cur_line.buff);
 
@@ -123,9 +128,11 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
 
     if (!sdp_cli->cmds->complete.num && !sdp_cli->cmds->complete.enter)
     {
-        snprintf(buff, sizeof(buff), "\n\tERROR : No such command : %s", sdp_cli->line->cur_line.buff);
-        cli_line_prints(sdp_cli->line, buff, strlen(buff));
-        cli_line_printc(sdp_cli->line, '\n');
+        cli_line_enter(sdp_cli->line);
+        cli_line_tab(sdp_cli->line);
+        cli_line_prints(sdp_cli->line, "ERROR : No such command : ", strlen("ERROR : No such command : "));
+        cli_line_prints(sdp_cli->line, sdp_cli->line->cur_line.buff, sdp_cli->line->cur_line.length);
+        cli_line_enter(sdp_cli->line);
         cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
         return -1;
     }
@@ -138,21 +145,21 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
     }
     else
     {    
-        cli_line_printc(sdp_cli->line, '\n');
+        cli_line_enter(sdp_cli->line);
     
         for (i = 0; i < sdp_cli->cmds->complete.num; ++i)
         {
-            snprintf(buff, sizeof(buff), "\t %s", sdp_cli->cmds->complete.buff[i]);
-            cli_line_prints(sdp_cli->line, buff, strlen(buff));
+            cli_line_tab(sdp_cli->line);
+            cli_line_prints(sdp_cli->line, sdp_cli->cmds->complete.buff[i], strlen(sdp_cli->cmds->complete.buff[i]));
         }
 
         if (sdp_cli->cmds->complete.enter)
         {
-            snprintf(buff, sizeof(buff), "\t [Enter]");
-            cli_line_prints(sdp_cli->line, buff, strlen(buff));
+            cli_line_tab(sdp_cli->line);
+            cli_line_prints(sdp_cli->line, "[Enter]", strlen("[Enter]"));
         }
 
-        cli_line_printc(sdp_cli->line, '\n');
+        cli_line_enter(sdp_cli->line);
         
         cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
     }
@@ -216,6 +223,7 @@ static int sdp_cli_input_char(SDP_CLI_T *sdp_cli)
             break;
         
         case CLI_CH_SINGLE(CLI_CH_SINGLE_BACKSPACE) :
+        case CLI_CH_SINGLE(CLI_CH_SINGLE_DELETE) :
             sdp_cli_backspace(sdp_cli);
             break;
 

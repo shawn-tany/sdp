@@ -433,7 +433,11 @@ int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
             if (complete_node->tail_flag && last_param_len == cmd_node->buff_len)
             {
                 cli_cmd->complete.enter = 1;
-                continue;
+
+                if (!complete_node->has_child)
+                {
+                    continue;
+                }
             }
             
             complete_num = cli_cmd->complete.num;

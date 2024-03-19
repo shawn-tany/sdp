@@ -16,6 +16,8 @@ typedef struct
     int   fdout;
     char *rowhead;
     char *prompthead;
+    struct termios termios_org;
+    struct termios termios_new;
 } CLI_CONFIG_T;
 
 typedef struct 

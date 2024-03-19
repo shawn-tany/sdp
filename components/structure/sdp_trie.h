@@ -17,6 +17,7 @@ typedef struct sdp_trie_node
     struct sdp_trie_node *node[MAX_CHILD_NUM];
     sdp_trie_entry_handle_func_t func;
     int tail_flag;
+    int has_child;
     int depth;
     int node_num;
     int data_len;

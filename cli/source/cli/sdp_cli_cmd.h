@@ -39,8 +39,14 @@ typedef struct
 
 typedef struct 
 {
+    int running;
+} CLI_CMD_STATUS_T;
+
+typedef struct 
+{
     CLI_CMD_COMPLETE_T complete;
     CLI_CMD_PARAM_T    param;
+    CLI_CMD_STATUS_T   status;
     SDP_TRIE_ROOT_T   *cmd_trie;
 } CLI_CMD_T;
 

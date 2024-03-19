@@ -65,6 +65,17 @@ static int cli_cmdfunc_list(const void *arg, int arg_len)
     return 0;
 }
 
+static int cli_cmdfunc_exit(const void *arg, int arg_len)
+{
+    PTR_CHECK_N1(g_cli_cmd);
+    PTR_CHECK_N1(arg);
+
+    g_cli_cmd->status.running = 0;
+
+    return 0;
+}
+
+
 int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
 {
     PTR_CHECK_N1(cli_cmd);
@@ -78,6 +89,17 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_ADD("bbb", "bbbtest");
     CLI_CMD_ADD("ccc", "ccctest");
     CLI_CMD_ADD("ddd", "dddtest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("aaa", "aaatest");
+    CLI_CMD_ADD("bbb", "bbbtest");
+    CLI_CMD_ADD("ccc", "ccctest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("aaa", "aaatest");
+    CLI_CMD_ADD("bbb", "bbbtest");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
 
     CLI_CMD_NEW;
@@ -102,12 +124,20 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
 
     CLI_CMD_NEW;
+    CLI_CMD_ADD("aab", "aatest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
     CLI_CMD_ADD("bbb", "bbbtest");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
 
     CLI_CMD_NEW;
     CLI_CMD_ADD("list", "show all command");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cli_cmdfunc_list);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("exit", "exit sdp command line");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cli_cmdfunc_exit);
     
     CLI_CMD_END;
 

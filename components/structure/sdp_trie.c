@@ -28,6 +28,7 @@ static int sdp_trie_new_node(SDP_TRIE_NODE_T **root, void *data, int size)
     memcpy((*root)->node[idx]->data, data, size);
     (*root)->node[idx]->node_num = 0;
     (*root)->node[idx]->depth = (*root)->depth + 1;
+    (*root)->node[idx]->has_child = 1;
     
     /* updata search */
     (*root)->node_num++;

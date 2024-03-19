@@ -148,7 +148,7 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
 
         if (sdp_cli->cmds->complete.enter)
         {
-            snprintf(buff, sizeof(buff), "\t Enter");
+            snprintf(buff, sizeof(buff), "\t [Enter]");
             cli_line_prints(sdp_cli->line, buff, strlen(buff));
         }
 
@@ -236,8 +236,6 @@ SDP_CLI_T *sdp_cli_init(CLI_CONFIG_T *sdp_cli_config)
 
     SDP_CLI_T *sdp_cli = NULL;
 
-    struct termios termios;
-
     sdp_cli = (SDP_CLI_T *)malloc(sizeof(SDP_CLI_T));
     if (!sdp_cli)
     {
@@ -247,9 +245,10 @@ SDP_CLI_T *sdp_cli_init(CLI_CONFIG_T *sdp_cli_config)
     memset(sdp_cli, 0, sizeof(*sdp_cli));
 
     /* termios configure */
-    tcgetattr(sdp_cli_config->fdout, &termios);
-    termios.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(sdp_cli_config->fdout, TCSANOW, &termios);
+    tcgetattr(sdp_cli_config->fdout, &sdp_cli_config->termios_org);
+    sdp_cli_config->termios_new = sdp_cli_config->termios_org;
+    sdp_cli_config->termios_new.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(sdp_cli_config->fdout, TCSANOW, &sdp_cli_config->termios_new);
 
     /* cli config */
     sdp_cli->config = *sdp_cli_config;
@@ -295,7 +294,9 @@ int sdp_cli_machine(SDP_CLI_T *sdp_cli)
 
     cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
 
-    while (1)
+    sdp_cli->cmds->status.running = 1;
+
+    while (sdp_cli->cmds->status.running)
     {
         sdp_cli_input_char(sdp_cli);
     }
@@ -307,9 +308,13 @@ int sdp_cli_exit(SDP_CLI_T *sdp_cli)
 {
     PTR_CHECK_N1(sdp_cli);
 
+    tcsetattr(sdp_cli->config.fdout, TCSANOW, &sdp_cli->config.termios_org);
+
     cli_ch_uninit(sdp_cli->chset);
 
     cli_line_uninit(sdp_cli->line);
+
+    cli_cmd_uninit(sdp_cli->cmds);
 
     free(sdp_cli);
 

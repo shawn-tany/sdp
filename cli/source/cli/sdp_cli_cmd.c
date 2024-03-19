@@ -231,10 +231,10 @@ int cli_cmd_execute(CLI_CMD_T *cli_cmd, char *cmdstr)
     return 0;
 }
 
-int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
+static int cli_cmd_complete_self(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_node_self)
 {
     PTR_CHECK_N1(cli_cmd);
-    PTR_CHECK_N1(cmdstr);
+    PTR_CHECK_N1(trie_node_self);
 
     int i = 0;
     int last_param_index = 0;    
@@ -243,10 +243,230 @@ int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
     int length = 0;
     int sublength = 0;
     char *laststr = NULL;
-    SDP_TRIE_NODE_T *trie_node = NULL;
-    SDP_TRIE_NODE_T *complete_node = NULL;
-    CLI_CMD_NODE_T  *cmd_root = NULL;
+    SDP_TRIE_NODE_T *trie_node_child = NULL;
+    CLI_CMD_NODE_T  *cmd_node_self = NULL;
+    CLI_CMD_NODE_T  *cmd_node_child = NULL;
+
+    last_param_index = (cli_cmd->param.num - 1);
+    if (0 > last_param_index)
+    {
+        last_param_index = 0;
+    }
+
+    last_param_len = cli_cmd->param.len[last_param_index];
+
+    cmd_node_self = (CLI_CMD_NODE_T *)trie_node_self->data;
+
+    /* Return the node corresponding to the parameter */
+    if (last_param_len == cmd_node_self->buff_len)
+    {
+        if (trie_node_self->tail_flag)
+        {
+            cli_cmd->complete.enter = 1;
+        }
+
+        /* Check if automatic completion is required */
+        /* it is a complete command and will not be automatically completed */
+        for (i = 0; i < !cli_cmd->complete.enter && trie_node_self->node_num; ++i)
+        {
+            trie_node_child = trie_node_self->node[i];
+            cmd_node_child = (CLI_CMD_NODE_T *)trie_node_child->data;
+
+            complete_num = cli_cmd->complete.num;
+
+            length = MIN((cmd_node_child->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
+            
+            if (!laststr)
+            {
+                laststr = cmd_node_child->buff;
+            }
+            else
+            {
+                sublength = cli_cmd_substring_length_head(laststr, cmd_node_child->buff, sublength);
+                if (!sublength)
+                {
+                    break;
+                }
+                
+                laststr = cmd_node_child->buff;
+            }
+        }
+
+        for (i = 0; i < trie_node_self->node_num; ++i)
+        {
+            trie_node_child = trie_node_self->node[i];
+            cmd_node_child = (CLI_CMD_NODE_T *)trie_node_child->data;
+
+            complete_num = cli_cmd->complete.num;
+
+            length = MIN((cmd_node_child->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
+
+            if (!cli_cmd->param.separate)
+            {
+                cli_cmd->complete.separate = 1;
+            }
+
+            /* Automatic completion */
+            if (sublength)
+            {
+                length = MIN(sublength, length);
+                
+                /* complete value */
+                snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node_child->buff);    
+                cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
+                cli_cmd->complete.num++;
+
+                break;
+            }
+            
+            /* complete value */
+            snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node_child->buff);    
+            cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
+            cli_cmd->complete.num++;
+        }
+    }
+    /* Incomplete parameters, complete the current parameters */
+    else
+    {
+        complete_num = cli_cmd->complete.num;
+    
+        length = MIN((cmd_node_self->buff_len - last_param_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
+    
+        /* complete value */
+        snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node_self->buff + last_param_len);    
+        cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
+        cli_cmd->complete.num++;
+    }
+
+    return 0;
+}
+
+static int cli_cmd_complete_parent(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_node_parent)
+{
+    PTR_CHECK_N1(cli_cmd);
+    PTR_CHECK_N1(trie_node_parent);
+
+    int i = 0;
+    int last_param_index = 0;    
+    int last_param_len = 0;
+    int complete_num = 0;
+    int length = 0;
+    int sublength = 0;
+    char *laststr = NULL;
+    SDP_TRIE_NODE_T *trie_node_brother = NULL;
     CLI_CMD_NODE_T  *cmd_node = NULL;
+
+    last_param_index = (cli_cmd->param.num - 1);
+    if (0 > last_param_index)
+    {
+        last_param_index = 0;
+    }
+
+    last_param_len = cli_cmd->param.len[last_param_index];
+
+    /* Check if automatic completion is required */
+    for (i = 0; i < trie_node_parent->node_num; ++i)
+    {
+        trie_node_brother = trie_node_parent->node[i];
+        cmd_node = (CLI_CMD_NODE_T *)trie_node_brother->data;
+
+        /* Return the parent node corresponding to the parameter */
+        if (cli_cmd->param.num && strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, last_param_len))
+        {
+            continue;
+        }
+
+        if (!trie_node_parent->depth)
+        {
+            /* Exact match, and it is a complete command */
+            if (trie_node_brother->tail_flag && last_param_len == cmd_node->buff_len)
+            {
+                sublength = 0;
+                break;
+            }
+        }
+        else
+        {
+            /* Exact match, or it is a complete command */
+            if (last_param_len == cmd_node->buff_len)
+            {
+                sublength = 0;
+                break;
+            }
+        }
+
+        if (!laststr)
+        {
+            laststr = cmd_node->buff;
+        }
+        else
+        {
+            sublength = cli_cmd_substring_length_head(laststr, cmd_node->buff, sublength);
+            if (!sublength)
+            {
+                break;
+            }
+            
+            laststr = cmd_node->buff;
+        }
+    }
+
+    for (i = 0; i < trie_node_parent->node_num; ++i)
+    {
+        trie_node_brother = trie_node_parent->node[i];
+        cmd_node = (CLI_CMD_NODE_T *)trie_node_brother->data;
+
+        /* Return the parent node corresponding to the parameter */
+        if (cli_cmd->param.num && strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, last_param_len))
+        {
+            continue;
+        }
+
+        /* Exact match, and it is a complete command */
+        if (trie_node_brother->tail_flag && last_param_len == cmd_node->buff_len)
+        {
+            cli_cmd->complete.enter = 1;
+
+            if (!trie_node_brother->has_child)
+            {
+                continue;
+            }
+        }
+        
+        complete_num = cli_cmd->complete.num;
+        
+        length = MIN((cmd_node->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
+
+        if (sublength)
+        {
+            length = MIN(sublength, length);
+        
+            if (length > last_param_len)
+            {
+                /* complete value */
+                snprintf(cli_cmd->complete.buff[complete_num], length - last_param_len + 1, "%s", cmd_node->buff + last_param_len);    
+                cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
+                cli_cmd->complete.num++;
+
+                break;
+            }
+        }
+        
+        /* complete value */
+        snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node->buff);    
+        cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
+        cli_cmd->complete.num++;
+    }
+
+    return 0;
+}
+
+int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
+{
+    PTR_CHECK_N1(cli_cmd);
+    PTR_CHECK_N1(cmdstr);
+
+    SDP_TRIE_NODE_T *trie_node = NULL;
 
     cli_cmd_parse(cli_cmd, cmdstr);
 
@@ -274,196 +494,15 @@ int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr)
         trie_node = &cli_cmd->cmd_trie->root;
     }
 
-    last_param_index = (cli_cmd->param.num - 1);
-    if (0 > last_param_index)
-    {
-        last_param_index = 0;
-    }
-
-    last_param_len = cli_cmd->param.len[last_param_index];
-
     /* Return the node corresponding to the parameter */
-    if (trie_node->depth == cli_cmd->param.num && last_param_len)
+    if (trie_node->depth == cli_cmd->param.num && cli_cmd->param.num)
     {
-        cmd_root = (CLI_CMD_NODE_T *)trie_node->data;
-
-        /* Return the node corresponding to the parameter */
-        if (last_param_len == cmd_root->buff_len)
-        {
-            if (trie_node->tail_flag)
-            {
-                cli_cmd->complete.enter = 1;
-            }
-
-            /* Check if automatic completion is required */
-            /* it is a complete command and will not be automatically completed */
-            for (i = 0; i < !cli_cmd->complete.enter && trie_node->node_num; ++i)
-            {
-                complete_node = trie_node->node[i];
-                cmd_node = (CLI_CMD_NODE_T *)complete_node->data;
-
-                complete_num = cli_cmd->complete.num;
-
-                length = MIN((cmd_node->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
-                
-                if (!laststr)
-                {
-                    laststr = cmd_node->buff;
-                }
-                else
-                {
-                    sublength = cli_cmd_substring_length_head(laststr, cmd_node->buff, sublength);
-                    if (!sublength)
-                    {
-                        break;
-                    }
-                    
-                    laststr = cmd_node->buff;
-                }
-            }
-
-            for (i = 0; i < trie_node->node_num; ++i)
-            {
-                complete_node = trie_node->node[i];
-                cmd_node = (CLI_CMD_NODE_T *)complete_node->data;
-
-                complete_num = cli_cmd->complete.num;
-
-                length = MIN((cmd_node->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
-
-                if (!cli_cmd->param.separate)
-                {
-                    cli_cmd->complete.separate = 1;
-                }
-
-                /* Automatic completion */
-                if (sublength)
-                {
-                    length = MIN(sublength, length);
-                    
-                    /* complete value */
-                    snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node->buff);    
-                    cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
-                    cli_cmd->complete.num++;
-
-                    break;
-                }
-                
-                /* complete value */
-                snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node->buff);    
-                cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
-                cli_cmd->complete.num++;
-            }
-        }
-        /* Incomplete parameters, complete the current parameters */
-        else
-        {
-            complete_num = cli_cmd->complete.num;
-        
-            length = MIN((cmd_root->buff_len - last_param_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
-        
-            /* complete value */
-            snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_root->buff + last_param_len);    
-            cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
-            cli_cmd->complete.num++;
-        }
+        cli_cmd_complete_self(cli_cmd, trie_node);
     }
     /* Return the parent node corresponding to the parameter */
     else 
     {
-        /* Check if automatic completion is required */
-        for (i = 0; i < trie_node->node_num; ++i)
-        {
-            complete_node = trie_node->node[i];
-            cmd_node = (CLI_CMD_NODE_T *)complete_node->data;
-
-            /* Return the parent node corresponding to the parameter */
-            if (cli_cmd->param.num && strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, last_param_len))
-            {
-                continue;
-            }
-
-            if (!trie_node->depth)
-            {
-                /* Exact match, and it is a complete command */
-                if (complete_node->tail_flag && last_param_len == cmd_node->buff_len)
-                {
-                    sublength = 0;
-                    break;
-                }
-            }
-            else
-            {
-                /* Exact match, or it is a complete command */
-                if (last_param_len == cmd_node->buff_len)
-                {
-                    sublength = 0;
-                    break;
-                }
-            }
-
-            if (!laststr)
-            {
-                laststr = cmd_node->buff;
-            }
-            else
-            {
-                sublength = cli_cmd_substring_length_head(laststr, cmd_node->buff, sublength);
-                if (!sublength)
-                {
-                    break;
-                }
-                
-                laststr = cmd_node->buff;
-            }
-        }
-    
-        for (i = 0; i < trie_node->node_num; ++i)
-        {
-            complete_node = trie_node->node[i];
-            cmd_node = (CLI_CMD_NODE_T *)complete_node->data;
-
-            /* Return the parent node corresponding to the parameter */
-            if (cli_cmd->param.num && strncmp(cli_cmd->param.buff[last_param_index], cmd_node->buff, last_param_len))
-            {
-                continue;
-            }
-
-            /* Exact match, and it is a complete command */
-            if (complete_node->tail_flag && last_param_len == cmd_node->buff_len)
-            {
-                cli_cmd->complete.enter = 1;
-
-                if (!complete_node->has_child)
-                {
-                    continue;
-                }
-            }
-            
-            complete_num = cli_cmd->complete.num;
-            
-            length = MIN((cmd_node->buff_len + 1), sizeof(cli_cmd->complete.buff[complete_num]));
-
-            if (sublength)
-            {
-                length = MIN(sublength, length);
-            
-                if (length > last_param_len)
-                {
-                    /* complete value */
-                    snprintf(cli_cmd->complete.buff[complete_num], length - last_param_len + 1, "%s", cmd_node->buff + last_param_len);    
-                    cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
-                    cli_cmd->complete.num++;
-
-                    break;
-                }
-            }
-            
-            /* complete value */
-            snprintf(cli_cmd->complete.buff[complete_num], length, "%s", cmd_node->buff);    
-            cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
-            cli_cmd->complete.num++;
-        }
+        cli_cmd_complete_parent(cli_cmd, trie_node);
     }
 
     return 0;

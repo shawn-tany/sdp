@@ -185,6 +185,54 @@ SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *patt
     return search;
 }
 
+
+SDP_TRIE_NODE_T *sdp_trie_found_incomplete(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num)
+{
+    if (!root || !pattern || !pattern_len)
+    {
+        return NULL;
+    }
+
+    int pattern_idx = 0;
+    int node_idx    = 0;
+    int search_flag = 0;
+
+    SDP_TRIE_NODE_T *search = &root->root;
+
+    for (pattern_idx = 0; pattern_idx < ele_num; ++pattern_idx)
+    {
+        /* not any node */
+        if (!search->node_num)
+        {
+            return NULL;
+        }
+
+        search_flag = 0;
+
+        /* search node */
+        for (node_idx = 0; node_idx < search->node_num; ++node_idx)
+        {
+            /* exist */
+            if (!(root->cmp.cmp_found_flex(pattern[pattern_idx], pattern_len[pattern_idx], 
+                            search->node[node_idx]->data, search->node[node_idx]->data_len)))
+            {
+                /* updata search */
+                search = search->node[node_idx];
+                search_flag = 1;
+                break;                
+            }
+        }
+
+        /* not found */
+        if (!search_flag)
+        {
+            return NULL;
+        }
+    }
+
+    return search;
+}
+
 SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, int fuzz_flag)
 {
     if (!root || !pattern || !pattern_len)

@@ -236,6 +236,41 @@ int cli_cmd_execute(CLI_CMD_T *cli_cmd, char *cmdstr)
     return 0;
 }
 
+int cli_cmd_help(CLI_CMD_T *cli_cmd, char *cmdstr)
+{
+    PTR_CHECK_N1(cli_cmd);
+    PTR_CHECK_N1(cmdstr);
+
+    SDP_TRIE_NODE_T *trie_node = NULL;
+    CLI_CMD_NODE_T  *cmd_node  = NULL;
+
+    cli_cmd_parse(cli_cmd, cmdstr);
+
+    if (!cli_cmd->param.num)
+    {
+        return 0;
+    }
+
+    cli_cmd->prompt.length = 0;
+    
+    trie_node = sdp_trie_found_incomplete(cli_cmd->cmd_trie, 
+                               (void **)(cli_cmd->param.buff_ptr), 
+                               cli_cmd->param.len, 
+                               cli_cmd->param.num);
+    if (!trie_node)
+    {
+        return -1;
+    }
+
+    cmd_node = (CLI_CMD_NODE_T *)trie_node->data;
+
+    snprintf(cli_cmd->prompt.buff, sizeof(cli_cmd->prompt.buff), "%s", cmd_node->prompt);
+    cli_cmd->prompt.length = cmd_node->prompt_len;
+
+    return 0;
+}
+
+
 static int cli_cmd_complete_self(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_node_self)
 {
     PTR_CHECK_N1(cli_cmd);

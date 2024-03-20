@@ -22,6 +22,12 @@ typedef struct
 
 typedef struct 
 {
+    char  buff[CLI_CMD_MAX_PROMPT_LEN];
+    int   length;
+} CLI_CMD_PROMPT_T;
+
+typedef struct 
+{
     char  buff[CLI_CMD_MAX_PARAM_NUM][CLI_CMD_MAX_PARAM_LEN];
     char *buff_ptr[CLI_CMD_MAX_PARAM_NUM];
     int   len[CLI_CMD_MAX_PARAM_NUM];
@@ -46,6 +52,7 @@ typedef struct
 {
     CLI_CMD_COMPLETE_T complete;
     CLI_CMD_PARAM_T    param;
+    CLI_CMD_PROMPT_T   prompt;
     CLI_CMD_STATUS_T   status;
     SDP_TRIE_ROOT_T   *cmd_trie;
 } CLI_CMD_T;
@@ -98,6 +105,8 @@ CLI_CMD_T *cli_cmd_init(void);
 int cli_cmd_uninit(CLI_CMD_T *cli_cmd);
 
 int cli_cmd_execute(CLI_CMD_T *cli_cmd, char *cmdstr);
+
+int cli_cmd_help(CLI_CMD_T *cli_cmd, char *cmdstr);
 
 int cli_cmd_complete(CLI_CMD_T *cli_cmd, char *cmdstr);
 

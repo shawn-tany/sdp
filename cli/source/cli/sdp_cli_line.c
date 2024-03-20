@@ -552,5 +552,3 @@ int cli_line_his_reset(CLI_LINE_T *cli_line)
 
     return 0;
 }
-
-

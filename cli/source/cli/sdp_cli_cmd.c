@@ -246,12 +246,12 @@ int cli_cmd_help(CLI_CMD_T *cli_cmd, char *cmdstr)
 
     cli_cmd_parse(cli_cmd, cmdstr);
 
+    cli_cmd->prompt.length = 0;
+
     if (!cli_cmd->param.num)
     {
         return 0;
     }
-
-    cli_cmd->prompt.length = 0;
     
     trie_node = sdp_trie_found_incomplete(cli_cmd->cmd_trie, 
                                (void **)(cli_cmd->param.buff_ptr), 

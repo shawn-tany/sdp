@@ -97,16 +97,19 @@ static int sdp_cli_help(SDP_CLI_T *sdp_cli)
         cli_line_tab(sdp_cli->line);
         cli_line_prints(sdp_cli->line, "ERROR : No such command : ", strlen("ERROR : No such command : "));
         cli_line_prints(sdp_cli->line, sdp_cli->line->cur_line.buff, sdp_cli->line->cur_line.length);
+
+        cli_line_enter(sdp_cli->line);
+        cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
     }
-    else
+    else if (sdp_cli->cmds->prompt.length)
     {
         cli_line_prints(sdp_cli->line, sdp_cli->config.prompthead, strlen(sdp_cli->config.prompthead));
         cli_line_tab(sdp_cli->line);
         cli_line_prints(sdp_cli->line, sdp_cli->cmds->prompt.buff, sdp_cli->cmds->prompt.length);
-    }
 
-    cli_line_enter(sdp_cli->line);
-    cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
+        cli_line_enter(sdp_cli->line);
+        cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
+    }
 
     return 0;
 }

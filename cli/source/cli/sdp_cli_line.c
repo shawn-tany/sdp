@@ -334,10 +334,16 @@ int cli_line_clean(CLI_LINE_T *cli_line)
 
     int i = 0;
     int cursor = cli_line->cursor;
+    int length = cli_line->cur_line.length;
 
     for (i = 0; i < cursor; ++i)
     {
         cli_line_backspace(cli_line);
+    }
+
+    for (; i < length; ++i)
+    {
+        cli_line_delete(cli_line);
     }
 
     return 0;

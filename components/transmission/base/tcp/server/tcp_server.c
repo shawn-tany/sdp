@@ -8,57 +8,68 @@
 #include <sys/select.h>
 #include <netinet/tcp.h>
 
-#include "tcp_trans.h"
-#include "msg.h"
-#include "transmission.h"
+#include "tcp_server.h"
 
 /* server api */
 
-static int tcp_server_init(MFTP_TCP_DESC_T *tcp_desc)
+tcp_server_acceptor_t *tcp_server_acceptor(char *ip, UINT16_T port, char *ethdev)
 {
-    PTR_CHECK_N1(tcp_desc);
+    PTR_CHECK_NULL(ip);
+    PTR_CHECK_NULL(ethdev);
 
     int ret  = 0;
-    int sock = 0;
     struct sockaddr_in server_addr = {0};
     struct ifreq ifrq = {0};
+    tcp_server_acceptor_t *acceptor = NULL;
+
+    acceptor = (tcp_server_acceptor_t *)malloc(sizeof(*acceptor));
+    if (!acceptor)
+    {
+        printf("failed to create tcp server acceptor\n");
+        return NULL;
+    }
+
+    snprintf(acceptor->info.ip, sizeof(acceptor->info.ip), "%s", ip);
+    acceptor->info.port = port;
+    snprintf(acceptor->info.ethdev, sizeof(acceptor->info.ethdev), "%s", ethdev);
 
     /* create socket */
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (0 > sock) 
+    acceptor->desc.socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (0 > acceptor->desc.socket) 
     {
         perror("socket error");
-        return -1;
+        free(acceptor);
+        return NULL;
     }
 
     /* bind tcp_ctl->ethdev */
-    snprintf(ifrq.ifr_ifrn.ifrn_name, MFTP_TCP_ETHDEV_LEN, "%s", tcp_desc->ethdev);
-    ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifrq, sizeof(ifrq));
+    snprintf(ifrq.ifr_ifrn.ifrn_name, sizeof(ifrq.ifr_ifrn.ifrn_name), "%s", acceptor->info.ethdev);
+    ret = setsockopt(acceptor->desc.socket, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifrq, sizeof(ifrq));
     if (ret < 0)
     {
         perror("setsockopt error");
-        close(sock);
-        return -1;
+        free(acceptor);
+        close(acceptor->desc.socket);
+        return NULL;
     }
 
     /* server ip & server port */
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = htons(tcp_desc->port);
-    inet_pton(AF_INET, tcp_desc->ip, &server_addr.sin_addr);
+    server_addr.sin_port   = htons(acceptor->info.port);
+    inet_pton(AF_INET, acceptor->info.ip, &server_addr.sin_addr);
 
     /* connect server */
-    ret = bind(sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    ret = bind(acceptor->desc.socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (ret < 0) {
         perror("bind error");
-        close(sock);
-        return -1;
+        free(acceptor);
+        close(acceptor->desc.socket);
+        return NULL;
     }
 
-    listen(sock, MFTP_TCP_MAX_CLIENT);
+    listen(acceptor->desc.socket, TCP_MAX_CLIENT);
 
-    tcp_desc->sock = sock;
-
-    return 0;
+    return acceptor;
 }
 
 static int tcp_server_trans(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *msg, MFTP_DIRECTION_T direction)

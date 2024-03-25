@@ -6,14 +6,21 @@
 #define TCP_ETHDEV_LEN 32
 #define TCP_IPADDR_LEN 32
 
+#define TCP_MAX_CLIENT 10
+
 typedef int (*trans_callback_func)(void *, int);
+
+typedef struct 
+{
+    int socket;
+} tcp_server_desc_t;
 
 typedef struct 
 {
     UINT16_T port;
     char ip[TCP_ETHDEV_LEN];
     char ethdev[TCP_IPADDR_LEN];
-} tcp_server_desc_t;
+} tcp_server_info_t;
 
 typedef struct 
 {
@@ -24,7 +31,13 @@ typedef struct
 typedef struct 
 {
     tcp_server_desc_t desc;
-    tcp_server_func_t func;
+    tcp_server_info_t info;
+} tcp_server_acceptor_t;
+
+typedef struct 
+{
+    tcp_server_acceptor_t acceptor;
+    tcp_server_func_t     func;
 } tcp_server_t;
 
 #endif

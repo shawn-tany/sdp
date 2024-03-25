@@ -13,8 +13,6 @@
 #define MFTP_TCP_RECV_TIMEOUT 100
 #define MFTP_TCP_CONN_TIMEOUT 10
 
-#define MFTP_TCP_MAX_CLIENT 10
-
 typedef struct 
 {
     UINT16_T is_server : 1;

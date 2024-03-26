@@ -24,20 +24,28 @@ typedef struct
 
 typedef struct 
 {
+    UINT16_T work_count;
+    UINT16_T quit;
+} tcp_server_work_t;
+
+typedef struct 
+{
+    tcp_server_desc_t desc;
+    tcp_server_info_t info;
+    tcp_server_work_t work;
+} tcp_server_t;
+
+typedef struct 
+{
     trans_callback_func recv_callback;
     trans_callback_func send_callback;
 } tcp_server_func_t;
 
 typedef struct 
 {
-    tcp_server_desc_t desc;
-    tcp_server_info_t info;
-} tcp_server_acceptor_t;
-
-typedef struct 
-{
-    tcp_server_acceptor_t acceptor;
-    tcp_server_func_t     func;
-} tcp_server_t;
+    int socket;
+    int pthread;
+    tcp_server_func_t func;
+} tcp_server_channel_t;
 
 #endif

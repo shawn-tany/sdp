@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "cpu.h"
+
 #define BI_CPU_INFO_FILE "/proc/cpuinfo"
 #define BI_CPU_STAT_FILE "/proc/stat"
 
@@ -10,7 +12,7 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
 {
     FILE *fp;
     char *ptr = NULL;
-    char  buffer[1024] = {0};    
+    char  line[1024] = {0};    
     int   num = 0;
     int   length = 0;
     int   ret = -1;
@@ -26,33 +28,33 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
         return -1;
     }
  
-    while (fgets(buffer, sizeof(buffer), fp)) 
+    while (fgets(line, sizeof(line), fp)) 
     {
-        if (strncmp(buffer, "processor", 9)) 
+        if (strncmp(line, "processor", 9)) 
         {
             continue;
         }
 
-        num = strtol(buffer, NULL, 10);
+        num = strtol(line, NULL, 10);
         
         if (num != cpu_socket) 
         {
             continue;
         }
 
-        while (fgets(buffer, sizeof(buffer), fp)) 
+        while (fgets(line, sizeof(line), fp)) 
         {
-            if ('\n' == buffer[0])
+            if ('\n' == line[0])
             {
                 break;
             }
         
-            if (strncmp(buffer, key, strlen(key))) 
+            if (strncmp(line, key, strlen(key))) 
             {
                 continue;
             }
 
-            ptr = strchr(buffer, ':');
+            ptr = strchr(line, ':');
             if (ptr)
             {
                 ptr += 2;
@@ -77,7 +79,7 @@ int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
 {
     FILE *fp;
     char *ptr = NULL;
-    char  buffer[1024] = {0};    
+    char  line[1024] = {0};    
     int   num = 0;
     int   ret = -1;
 
@@ -92,33 +94,33 @@ int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
         return -1;
     }
  
-    while (fgets(buffer, sizeof(buffer), fp)) 
+    while (fgets(line, sizeof(line), fp)) 
     {
-        if (strncmp(buffer, "processor", 9)) 
+        if (strncmp(line, "processor", 9)) 
         {
             continue;
         }
 
-        num = strtol(buffer, NULL, 10);
+        num = strtol(line, NULL, 10);
         
         if (num != cpu_socket) 
         {
             continue;
         }
 
-        while (fgets(buffer, sizeof(buffer), fp)) 
+        while (fgets(line, sizeof(line), fp)) 
         {
-            if ('\n' == buffer[0])
+            if ('\n' == line[0])
             {
                 break;
             }
         
-            if (strncmp(buffer, key, strlen(key))) 
+            if (strncmp(line, key, strlen(key))) 
             {
                 continue;
             }
 
-            ptr = strchr(buffer, ':');
+            ptr = strchr(line, ':');
             if (ptr)
             {
                 ptr += 2;
@@ -184,12 +186,64 @@ int bi_cpuinfo_cachesize_get(int cpu_socket, int *size)
     return bi_cpuinfo_int_get(cpu_socket, "cache size", size);    
 }
 
-int bi_cpustat_usagerate_get(int cpu_socket, double *rate)
+int bi_cpustat_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
 {
-    if (!rate)
+    FILE* fp = NULL;
+    char line[256] = {0};
+    char buff[32] = {0};
+    CPU_STAT_T cur_stat = {0};
+    int ret = -1;
+    long totol_time_cur = 0;
+    long idle_time_cur = 0;
+    long totol_time_last = 0;
+    long idle_time_last = 0;
+
+    if (!rate || !cpu_stat)
     {
         return -1;
     }
 
-    return 0;
+    snprintf(buff, sizeof(buff), "cpu%d", cpu_socket);
+
+    fp = fopen(BI_CPU_STAT_FILE, "r");
+    if (!fp) 
+    {
+        return 1;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (strncmp(line, buff, strlen(buff)))
+        {
+            continue;
+        }
+
+        sscanf(line, "cpu %ld %ld %ld %ld %ld %ld %ld", 
+                    &cur_stat.user, &cur_stat.nice, &cur_stat.system, 
+                    &cur_stat.idle, &cur_stat.iowait, &cur_stat.irq, &cur_stat.softirq);
+
+        ret = 0;
+        break;
+    }
+
+    fclose(fp);
+
+    totol_time_last = cpu_stat->user + cpu_stat->nice + cpu_stat->system + 
+                      cpu_stat->idle + cpu_stat->iowait + cpu_stat->irq + cpu_stat->softirq;
+    idle_time_last = cpu_stat->idle;
+
+    *cpu_stat = cur_stat;
+
+    if (!totol_time_last)
+    {
+        return -1;
+    }
+    
+    totol_time_cur = cur_stat.user + cur_stat.nice + cur_stat.system + 
+                      cur_stat.idle + cur_stat.iowait + cur_stat.irq + cur_stat.softirq;
+    idle_time_cur = cur_stat.idle;
+
+    *rate = 100.0 * (1.0 - (float)(idle_time_cur - idle_time_last) / (float)(totol_time_cur - totol_time_last));
+
+    return ret;
 }

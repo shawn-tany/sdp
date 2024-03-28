@@ -97,6 +97,13 @@ static void *tcp_server_channel_loop(void *arg)
     return NULL;
 }
 
+static void tcp_server_channel_destory(tcp_server_channel_t *channel)
+{
+    PTR_CHECK_VOID(channel);
+
+    free(channel);
+}
+
 int tcp_server_loop(tcp_server_t *server, tcp_server_func_t *func_opts)
 {
     PTR_CHECK_N1(server);

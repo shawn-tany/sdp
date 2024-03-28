@@ -186,12 +186,10 @@ int bi_cpuinfo_cachesize_get(int cpu_socket, int *size)
 
 int bi_cpustat_usagerate_get(int cpu_socket, double *rate)
 {
-    
-
     if (!rate)
     {
         return -1;
     }
 
-    
+    return 0;
 }

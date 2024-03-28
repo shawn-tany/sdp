@@ -2,4 +2,5 @@
 mult-ftp/source/mftp
 mult-ftp/build/
 cli/build/
-components/boardinfo/build/
+components/boardinfo/example/build/
+components/dirtraval/example/build/

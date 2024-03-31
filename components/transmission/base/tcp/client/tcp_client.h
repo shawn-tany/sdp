@@ -1,38 +1,42 @@
-#ifndef MFTP_TCP_TRANSMISSION
-#define MFTP_TCP_TRANSMISSION
+#ifndef TCP_CLIENT
+#define TCP_CLIENT
 
 #include "common.h"
-#include "msg.h"
 
-#define MFTP_TCP_ETHDEV_LEN 32
-#define MFTP_TCP_IPADDR_LEN 32
+#define TCP_ETHDEV_LEN 16
+#define TCP_IPADDR_LEN 32
 
-#define MFTP_TCP_RECV_DELAY 200
-#define MFTP_TCP_CONN_DELAY 200
+#define TCP_RECV_DELAY 200
+#define TCP_CONN_DELAY 200
 
-#define MFTP_TCP_RECV_TIMEOUT 100
-#define MFTP_TCP_CONN_TIMEOUT 10
+#define TCP_RECV_TIMEOUT 100
+#define TCP_CONN_TIMEOUT 10
 
 typedef struct 
 {
-    UINT16_T is_server : 1;
-    UINT16_T rsv : 15;
+    int sock;
+} TCP_CLIENT_DESC_T;
+
+typedef struct 
+{
     UINT16_T port;
-    char ip[MFTP_TCP_ETHDEV_LEN];
-    char ethdev[MFTP_TCP_IPADDR_LEN];
+    char ip[TCP_IPADDR_LEN];
+    char ethdev[TCP_ETHDEV_LEN];
+} TCP_CLIENT_INFO_T;
 
-    int sock;    
+typedef struct 
+{
+    TCP_CLIENT_DESC_T desc;
+    TCP_CLIENT_INFO_T info;
+} TCP_CLIENT_T;
 
-    /* server accept socket */
-    int client_sock[MFTP_TCP_MAX_CLIENT];
-} MFTP_TCP_DESC_T;
+/* client api */
+TCP_CLIENT_T * tcp_client_init(char *ip, UINT16_T port, char *ethdev);
 
-int tcp_init();
+int tcp_client_recv(TCP_CLIENT_T *client, void *data, int data_len);
 
-int tcp_uninit();
+int tcp_client_send(TCP_CLIENT_T *client, void *data, int data_len);
 
-int tcp_recv();
-
-int tcp_send();
+int tcp_client_uninit(TCP_CLIENT_T *client);
 
 #endif

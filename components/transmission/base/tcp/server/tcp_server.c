@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h> 
@@ -13,7 +15,7 @@
 
 /* server api */
 
-tcp_server_t *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
+TCP_SERVER_T *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
 {
     PTR_CHECK_NULL(ip);
     PTR_CHECK_NULL(ethdev);
@@ -21,9 +23,9 @@ tcp_server_t *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
     int ret  = 0;
     struct sockaddr_in server_addr = {0};
     struct ifreq ifrq = {0};
-    tcp_server_t *server = NULL;
+    TCP_SERVER_T *server = NULL;
 
-    server = (tcp_server_t *)malloc(sizeof(*server));
+    server = (TCP_SERVER_T *)malloc(sizeof(*server));
     if (!server)
     {
         printf("failed to create tcp server\n");
@@ -50,8 +52,8 @@ tcp_server_t *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
     if (ret < 0)
     {
         perror("setsockopt error");
-        free(server);
         close(server->desc.socket);
+        free(server);
         return NULL;
     }
 
@@ -64,47 +66,65 @@ tcp_server_t *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
     ret = bind(server->desc.socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (ret < 0) {
         perror("bind error");
-        free(server);
         close(server->desc.socket);
+        free(server);
         return NULL;
     }
 
     listen(server->desc.socket, TCP_MAX_CLIENT);
 
-    return server;
-}
-
-static tcp_server_channel_t *tcp_server_channel_create(tcp_server_func_t *func_opts)
-{
-    PTR_CHECK_N1(func_opts);
-
-    tcp_server_channel_t *channel = NULL;
-
-    channel = (tcp_server_channel_t *)malloc(sizeof(tcp_server_channel_t));
-    if (!channel)
+    /* tcp server thread pool */
+    server->work.pool = thread_pool_create(TCP_MAX_CLIENT, TCP_MAX_EVENT);
+    if (!server->work.pool)
     {
-        printf("failed to create tcp server channel\n");
+        printf("failed to create tcp server thread pool\n");
+        close(server->desc.socket);
+        free(server);
         return NULL;
     }
 
-    channel->func = *func_opts;
-
-    return channel;
+    return server;
 }
 
-static void *tcp_server_channel_loop(void *arg)
+static void tcp_server_task_loop(void *arg, int arg_size)
 {
-    return NULL;
+    PTR_CHECK_VOID(arg);
+
+    char w_buffer[1024] = {0};
+    char r_buffer[1024] = {0};
+    int length = 0;
+    TCP_SERVER_TASK_T *task = (TCP_SERVER_TASK_T *)arg;
+
+    while (1)
+    {
+        length = recv(task->socket, r_buffer, sizeof(r_buffer), 0);
+        if (0 > length)
+        {
+            perror("recv");
+            break;
+        }
+        else if (0 == length)
+        {
+            break;
+        }
+        else
+        {
+            task->func.recv_complete_callback(r_buffer, length);
+        }
+
+        task->func.send_encap_callback(r_buffer, sizeof(w_buffer), &length);
+
+        if (0 > send(task->socket, w_buffer, length, 0))
+        {
+            perror("send");
+            break;
+        }
+    }
+
+    close(task->socket);
 }
 
-static void tcp_server_channel_destory(tcp_server_channel_t *channel)
-{
-    PTR_CHECK_VOID(channel);
-
-    free(channel);
-}
-
-int tcp_server_loop(tcp_server_t *server, tcp_server_func_t *func_opts)
+int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts)
 {
     PTR_CHECK_N1(server);
     PTR_CHECK_N1(func_opts);
@@ -113,7 +133,7 @@ int tcp_server_loop(tcp_server_t *server, tcp_server_func_t *func_opts)
 
     struct sockaddr_in server_addr = {0};
     socklen_t client_len = {0};
-    tcp_server_channel_t *channel = NULL;
+    TCP_SERVER_TASK_T task;
 
     /* server ip & server port */
     server_addr.sin_family = AF_INET;
@@ -135,19 +155,13 @@ int tcp_server_loop(tcp_server_t *server, tcp_server_func_t *func_opts)
             return -1;
         }
 
-        channel = tcp_server_channel_create(func_opts);
-        if (!channel)
-        {
-            printf("failed to create tcp server cahnnel\n");
-            return -1;
-        }
+        task.socket = sock;
+        task.func   = *func_opts;
 
-        channel->socket = sock;
-
-        if (0 > pthread_create(&channel->pthread, NULL, tcp_server_channel_loop, (void *)channel))
+        if (0 > thread_event_add(server->work.pool, tcp_server_task_loop, (void *)(&task), sizeof(task)))
         {
-            perror("pthread create failed");
-            return -1;
+            printf("add tcp client event to queue failed\n");
+            break;
         }
 
         server->work.work_count++;

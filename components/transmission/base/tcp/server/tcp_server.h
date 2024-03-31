@@ -2,50 +2,56 @@
 #define TCP_SERVER
 
 #include "common.h"
+#include "thread_pool.h"
 
-#define TCP_ETHDEV_LEN 32
+#define TCP_ETHDEV_LEN 16
 #define TCP_IPADDR_LEN 32
-
 #define TCP_MAX_CLIENT 10
+#define TCP_MAX_EVENT  120
 
-typedef int (*trans_callback_func)(void *, int);
+typedef int (*recv_complete_callback_func_t)(void *, int);
+typedef int (*send_encap_callback_func_t)(void *, int, int *);
 
 typedef struct 
 {
     int socket;
-} tcp_server_desc_t;
+} TCP_SERVER_DESC_T;
 
 typedef struct 
 {
     UINT16_T port;
-    char ip[TCP_ETHDEV_LEN];
-    char ethdev[TCP_IPADDR_LEN];
-} tcp_server_info_t;
+    char ip[TCP_IPADDR_LEN];
+    char ethdev[TCP_ETHDEV_LEN];
+} TCP_SERVER_INFO_T;
 
 typedef struct 
 {
     UINT16_T work_count;
     UINT16_T quit;
-} tcp_server_work_t;
+    THREAD_POOL_T *pool;
+} TCP_SERVER_WORK_T;
 
 typedef struct 
 {
-    tcp_server_desc_t desc;
-    tcp_server_info_t info;
-    tcp_server_work_t work;
-} tcp_server_t;
+    TCP_SERVER_DESC_T desc;
+    TCP_SERVER_INFO_T info;
+    TCP_SERVER_WORK_T work;
+} TCP_SERVER_T;
 
 typedef struct 
 {
-    trans_callback_func recv_callback;
-    trans_callback_func send_callback;
-} tcp_server_func_t;
+    recv_complete_callback_func_t recv_complete_callback;
+    send_encap_callback_func_t send_encap_callback;
+} TCP_SERVER_FUNC_T;
 
 typedef struct 
 {
     int socket;
-    int pthread;
-    tcp_server_func_t func;
-} tcp_server_channel_t;
+    TCP_SERVER_FUNC_T func;
+} TCP_SERVER_TASK_T;
+
+TCP_SERVER_T *tcp_server_init(char *ip, UINT16_T port, char *ethdev);
+
+int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts);
 
 #endif

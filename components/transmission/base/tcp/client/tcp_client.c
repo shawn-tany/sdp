@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h> 
@@ -8,18 +10,13 @@
 #include <sys/select.h>
 #include <netinet/tcp.h>
 
-#include "tcp_trans.h"
-#include "msg.h"
-#include "transmission.h"
+#include "tcp_client.h"
 
-
-/* client api */
-
-static int tcp_client_init(MFTP_TCP_DESC_T *tcp_desc)
+static int _tcp_client_init(TCP_CLIENT_T *client)
 {
-    PTR_CHECK_N1(tcp_desc);
+    PTR_CHECK_N1(client);
 
-    int ret  = 0;
+    int ret = 0;
     int sock = 0;
     struct sockaddr_in server_addr = {0};
     struct ifreq ifrq = {0};
@@ -33,7 +30,7 @@ static int tcp_client_init(MFTP_TCP_DESC_T *tcp_desc)
     }
 
     /* bind tcp_ctl->ethdev */
-    snprintf(ifrq.ifr_ifrn.ifrn_name, MFTP_TCP_ETHDEV_LEN, "%s", tcp_desc->ethdev);
+    snprintf(ifrq.ifr_ifrn.ifrn_name, TCP_ETHDEV_LEN, "%s", client->info.ethdev);
     ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifrq, sizeof(ifrq));
     if (ret < 0)
     {
@@ -44,8 +41,8 @@ static int tcp_client_init(MFTP_TCP_DESC_T *tcp_desc)
 
     /* server ip & server port */
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = htons(tcp_desc->port);  
-    inet_pton(AF_INET, tcp_desc->ip, &server_addr.sin_addr);
+    server_addr.sin_port   = htons(client->info.port);  
+    inet_pton(AF_INET, client->info.ip, &server_addr.sin_addr);
 
     /* connect server */
     ret = connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -55,18 +52,20 @@ static int tcp_client_init(MFTP_TCP_DESC_T *tcp_desc)
         return -1;
     }
 
-    tcp_desc->sock = sock;
+    client->desc.sock = sock;
 
     return 0;
 }
 
-static int tcp_re_connect(MFTP_TCP_DESC_T *tcp_desc)
+static int _tcp_client_reconnect(TCP_CLIENT_T *client)
 {
+    PTR_CHECK_N1(client);
+
     struct tcp_info info;
     int ret    = 0;
     int conntm = 0;
     int len    = sizeof(info);
-    int sock   = tcp_desc->sock;
+    int sock   = client->desc.sock;
 
     ret = getsockopt(sock, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)(&len));
     if (0 > ret)
@@ -77,15 +76,15 @@ static int tcp_re_connect(MFTP_TCP_DESC_T *tcp_desc)
 
     if (TCP_ESTABLISHED != info.tcpi_state)
     {
-        while (conntm++ <= MFTP_TCP_CONN_TIMEOUT)
+        while (conntm++ <= TCP_CONN_TIMEOUT)
         {
             printf("try to re-connect times(%d)\n", conntm);
 
-            close(tcp_desc->sock);
+            close(client->desc.sock);
 
-            if (0 > tcp_client_init(tcp_desc))
+            if (0 > _tcp_client_init(client))
             {
-                usleep(MFTP_TCP_CONN_DELAY);
+                usleep(TCP_CONN_DELAY);
             }
             else
             {
@@ -101,15 +100,41 @@ static int tcp_re_connect(MFTP_TCP_DESC_T *tcp_desc)
     return -1;
 }
 
-static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
+/* client api */
+TCP_CLIENT_T * tcp_client_init(char *ip, UINT16_T port, char *ethdev)
 {
-    PTR_CHECK_N1(tcp_desc);
-    PTR_CHECK_N1(mftp_msg);
+    PTR_CHECK_NULL(ip);
+    PTR_CHECK_NULL(ethdev);
 
-    int ret     = 0;
-    int ready   = 0;
-    int recvtm  = 0;
-    int length  = 0;
+    TCP_CLIENT_T *client = NULL;
+
+    client = (TCP_CLIENT_T *)malloc(sizeof(*client));
+    if (!client)
+    {
+        printf("ERROR : Can not create tcp client\n");
+        return NULL;
+    }
+
+    if (0 > _tcp_client_init(client))
+    {
+        printf("ERROR : tcp client connect failed\n");
+        free(client);
+        return NULL;
+    }
+
+    return client;
+}
+
+int tcp_client_recv(TCP_CLIENT_T *client, void *data, int data_len)
+{
+    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(data);
+
+    int ret    = 0;
+    int ready  = 0;
+    int recvtm = 0;
+    int length = 0;
+    int offset = 0;
 
     fd_set rcvset;
     struct timeval tv;
@@ -117,7 +142,7 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
     tv.tv_sec  = 3;
     tv.tv_usec = 0;
 
-    if ((ret = tcp_re_connect(tcp_desc)))
+    if ((ret = _tcp_client_reconnect(client)))
     {
         if (-1 == ret)
         {
@@ -131,9 +156,9 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
     }
     
     FD_ZERO(&rcvset);
-    FD_SET(tcp_desc->sock, &rcvset);
+    FD_SET(client->desc.sock, &rcvset);
     
-    ready = select(tcp_desc->sock + 1, &rcvset, NULL, NULL, &tv);
+    ready = select(client->desc.sock + 1, &rcvset, NULL, NULL, &tv);
     if (0 > ready)
     {
         perror("select error");
@@ -145,16 +170,14 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
         return -1;
     }
 
-    mftp_msg->data_len = 0;
-
-    while ((recvtm++ <= MFTP_TCP_RECV_TIMEOUT))
+    while ((recvtm++ <= TCP_RECV_TIMEOUT))
     {
-        length = recv(ready, (mftp_msg->data + mftp_msg->data_len), (mftp_msg->data_size - mftp_msg->data_len), MSG_DONTWAIT);
+        length = recv(ready, data + offset, data_len - offset, MSG_DONTWAIT);
         if(0 > length)
         {
             if ((EAGAIN == errno) || (EWOULDBLOCK == errno))
             {
-                usleep(MFTP_TCP_RECV_DELAY);
+                usleep(TCP_RECV_DELAY);
                 continue;
             }
             else
@@ -165,7 +188,7 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
         }
         else if(length == 0)
         {
-            if ((ret = tcp_re_connect(tcp_desc)))
+            if ((ret = _tcp_client_reconnect(client)))
             {
                 if (-1 == ret)
                 {
@@ -182,22 +205,11 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
         }
         else
         {
-            mftp_msg->data_len += length;
+            offset += length;
 
-            if (mftp_msg->data_len >= sizeof(MFTP_MSG_HEADER_T))
+            if (offset >= data_len)
             {
-                mftp_msg->msg_header = (MFTP_MSG_HEADER_T *)(mftp_msg->data);
-
-                if (MFTP_MSG_TYPE_MSG_INFO == mftp_msg->msg_header->msg_type &&
-                    mftp_msg->data_len >= (sizeof(MFTP_MSG_HEADER_T) + sizeof(MFTP_MSG_INFO_T)))
-                {
-                    mftp_msg->msg_info = (MFTP_MSG_INFO_T *)(mftp_msg->data + sizeof(MFTP_MSG_HEADER_T));
-
-                    if (mftp_msg->msg_info->totol_data_size <= mftp_msg->data_len)
-                    {
-                        break;
-                    }
-                }
+                break;
             }
             
             recvtm = 0;
@@ -205,20 +217,20 @@ static int tcp_client_recv(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
         }
     }
 
-    return mftp_msg->data_len;
+    return offset;
 }
 
-static int tcp_client_send(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
+int tcp_client_send(TCP_CLIENT_T *client, void *data, int data_len)
 {
-    PTR_CHECK_N1(tcp_desc);
-    PTR_CHECK_N1(mftp_msg);
+    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(data);
 
     int ret    = 0;
     int length = 0;
-    int socket = tcp_desc->sock;
+    int socket = client->desc.sock;
 
     /* re-connect */
-    if ((ret = tcp_re_connect(tcp_desc)))
+    if ((ret = _tcp_client_reconnect(client)))
     {
         if (-1 == ret)
         {
@@ -231,7 +243,7 @@ static int tcp_client_send(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
         }
     }
 
-    length = send(socket, mftp_msg->data, mftp_msg->data_len, MSG_DONTWAIT);
+    length = send(socket, data, data_len, MSG_DONTWAIT);
     if (0 > length)
     {
         perror("write error");
@@ -240,84 +252,13 @@ static int tcp_client_send(MFTP_TCP_DESC_T *tcp_desc, MFTP_MSG_T *mftp_msg)
     return length;
 }
 
-
-int tcp_init(void *desc)
+int tcp_client_uninit(TCP_CLIENT_T *client)
 {
-    PTR_CHECK_N1(desc);
+    PTR_CHECK_N1(client);
 
-    int ret = 0;
-    MFTP_TCP_DESC_T *tcp_desc = desc;
+    close(client->desc.sock);
 
-    if (tcp_desc->is_server)
-    {
-        ret = tcp_server_init(tcp_desc);
-    }
-    else
-    {
-        ret = tcp_client_init(tcp_desc);
-    }
-
-    return ret;
-}
-
-int tcp_recv(void *desc, void *msg)
-{
-    PTR_CHECK_N1(desc);
-    PTR_CHECK_N1(msg);
-
-    int ret = 0;
-    MFTP_TCP_DESC_T *tcp_desc = desc;
-    MFTP_MSG_T *mftp_msg = msg;
-
-    if (tcp_desc->is_server)
-    {
-        ret = tcp_server_trans(tcp_desc, mftp_msg, MFTP_DIRECTION_RECV);
-    }
-    else
-    {
-        ret = tcp_client_recv(tcp_desc, mftp_msg);
-    }
-
-    return ret;
-}
-
-int tcp_send(void *desc, void *msg)
-{
-    PTR_CHECK_N1(desc);
-    PTR_CHECK_N1(msg);
-
-    int ret = 0;
-    MFTP_TCP_DESC_T *tcp_desc = desc;
-    MFTP_MSG_T *mftp_msg = msg;
-
-    if (tcp_desc->is_server)
-    {
-        ret = tcp_server_trans(tcp_desc, mftp_msg, MFTP_DIRECTION_SEND);
-    }
-    else
-    {
-        ret = tcp_client_send(tcp_desc, mftp_msg);
-    }
-
-    return ret;
-}
-
-int tcp_uninit(void *desc)
-{
-    PTR_CHECK_N1(desc);
-
-    MFTP_TCP_DESC_T *tcp_desc = desc;
-
-    close(tcp_desc->sock);
+    free(client);
 
     return 0;
 }
-
-static MFTP_TRANS_HANDLE_T tcp_handle = {
-    .trans_init = tcp_init,
-    .trans_recv = tcp_recv,
-    .trans_send = tcp_send,
-    .trans_uninit = tcp_uninit
-};
-
-MFTP_TRANS_HANDLE_REG_CONSTRUCTOR(MFTP_TRANS_TYPE_TCP, tcp_handle);

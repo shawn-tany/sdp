@@ -4,21 +4,25 @@
 typedef struct 
 {
     void *addr;
-    void *prod;
-    void *cons;
-    int offset;
+    int node_size;
     int avail;
     int total;
-} sdp_queue_t;
+    int prod;
+    int cons;
+} SDP_QUEUE_T;
 
-sdp_queue_t *sdp_queue_create(int node_num, int node_size);
+SDP_QUEUE_T *sdp_queue_create(int node_num, int node_size);
 
-void sdp_queue_free(sdp_queue_t *queue);
+void sdp_queue_free(SDP_QUEUE_T *queue);
 
-int sdp_enqueue(sdp_queue_t *queue, void *node, int size);
+int sdp_enqueue(SDP_QUEUE_T *queue, void *node, int size);
 
-int sdp_dequeue(sdp_queue_t *queue, void *node, int size);
+int sdp_dequeue(SDP_QUEUE_T *queue, void *node, int size);
 
-int sdp_queue_head(sdp_queue_t *queue, void *node, int size);
+int sdp_queue_head(SDP_QUEUE_T *queue, void *node, int size);
+
+int sdp_queue_full(SDP_QUEUE_T *queue);
+
+int sdp_queue_empty(SDP_QUEUE_T *queue);
 
 #endif

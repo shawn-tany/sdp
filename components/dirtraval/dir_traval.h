@@ -19,8 +19,8 @@ typedef struct
     unsigned char  rsv:7;    
     unsigned short last_depth;
     
-    sdp_stack_t *stack;
-    sdp_queue_t *queue;
+    SDP_STACK_T *stack;
+    SDP_QUEUE_T *queue;
 } dir_ctx_t;
 
 typedef enum

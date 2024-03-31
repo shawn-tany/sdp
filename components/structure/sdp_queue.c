@@ -10,11 +10,11 @@
     }                   \
 }
 
-sdp_queue_t *sdp_queue_create(int node_num, int node_size)
+SDP_QUEUE_T *sdp_queue_create(int node_num, int node_size)
 {
-    sdp_queue_t *queue = NULL;
+    SDP_QUEUE_T *queue = NULL;
 
-    queue = (sdp_queue_t *)malloc(sizeof(sdp_queue_t));
+    queue = (SDP_QUEUE_T *)malloc(sizeof(SDP_QUEUE_T));
 
     if (!queue) {
         return NULL;
@@ -28,23 +28,24 @@ sdp_queue_t *sdp_queue_create(int node_num, int node_size)
 
     memset(queue->addr, 0, node_num * node_size);
 
-    queue->prod = queue->addr;
-    queue->cons = queue->addr;
-
+    queue->prod = 0;
+    queue->cons = 0;
     queue->total = node_num;
     queue->avail = node_num;
-    queue->offset = node_size;
+    queue->node_size = node_size;
 
     return queue;
 }
 
-int sdp_enqueue(sdp_queue_t *queue, void *node, int size)
+int sdp_enqueue(SDP_QUEUE_T *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
     PTR_CHECK(queue->addr);
 
-    if (size > queue->offset) {
+    void *prod_addr = NULL;
+
+    if (size > queue->node_size) {
         return -2;
     }
 
@@ -52,70 +53,78 @@ int sdp_enqueue(sdp_queue_t *queue, void *node, int size)
         return -3;
     }
 
-    if (queue->prod > queue->addr + (queue->offset * queue->total) ||
-        queue->prod + queue->offset > queue->addr + (queue->offset * queue->total)) {
-        
-        queue->prod = queue->addr;
+    if (queue->prod >= queue->total)
+    {
+        queue->prod = 0;
     }
 
-    memcpy(queue->prod, node, size);
+    prod_addr = queue->addr + (queue->prod * queue->node_size);
 
-    queue->prod = queue->prod + queue->offset;
+    memcpy(prod_addr, node, size);
+
+    queue->prod++;
     
     queue->avail--;
 
     return 0;
 }
 
-int sdp_dequeue(sdp_queue_t *queue, void *node, int size)
+int sdp_dequeue(SDP_QUEUE_T *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
     PTR_CHECK(queue->addr);
 
+    void *cons_addr = NULL;
+
     if (queue->avail == queue->total) {
         return -4;
     }
 
-    if (queue->offset < size) {
+    if (queue->node_size < size) {
         return -5;
     }
 
-    if (queue->cons > queue->addr + (queue->offset * queue->total) ||
-        queue->cons + queue->offset > queue->addr + (queue->offset * queue->total)) {
-        
-        queue->cons = queue->addr;
+    if (queue->cons >= queue->total)
+    {
+        queue->cons = 0;
     }
 
-    memcpy(node, queue->cons, size);
+    cons_addr = queue->addr + (queue->cons * queue->node_size);
 
-    queue->cons = queue->cons + queue->offset;
+    memcpy(node, cons_addr, size);
+
+    queue->cons++;
     
     queue->avail++;
 
     return 0;
 }
 
-int sdp_queue_head(sdp_queue_t *queue, void *node, int size)
+int sdp_queue_head(SDP_QUEUE_T *queue, void *node, int size)
 {
     PTR_CHECK(queue);
     PTR_CHECK(node);
     PTR_CHECK(queue->addr);
 
+    void *cons_addr = NULL;
+
     if (queue->avail == queue->total) {
         return -4;
     }
 
-    if (queue->offset < size) {
+    if (queue->node_size < size) {
         return -5;
     }
 
-    memcpy(node, queue->cons, size);
+    cons_addr = queue->addr + (queue->cons * queue->node_size);
+
+    memcpy(node, cons_addr, size);
 
     return 0;
 }
 
-void sdp_queue_free(sdp_queue_t *queue)
+void sdp_queue_free(SDP_QUEUE_T *queue)
 {
     if (queue) {
         if (queue->addr) {
@@ -123,21 +132,40 @@ void sdp_queue_free(sdp_queue_t *queue)
             queue->addr = NULL;
         }
 
-        queue->prod = NULL;
-        queue->cons = NULL;
-        
+        queue->prod = 0;
+        queue->cons = 0;
         queue->total = 0;
         queue->avail = 0;
-        queue->offset = 0;
+        queue->node_size = 0;
 
         free(queue);
     }
 }
 
+int sdp_queue_empty(SDP_QUEUE_T *queue)
+{
+    if (!queue)
+    {
+        return 0;
+    }
+
+    return (queue->avail == queue->total);
+}
+
+int sdp_queue_full(SDP_QUEUE_T *queue)
+{
+    if (!queue)
+    {
+        return 0;
+    }
+
+    return (0 == queue->avail);
+}
+
 #if 0
 int main()
 {
-    sdp_queue_t *queue = sdp_queue_create(100, sizeof(int));
+    SDP_QUEUE_T *queue = sdp_queue_create(100, sizeof(int));
 
     if (!queue) {
         printf("faild to create queue\n");
@@ -147,7 +175,6 @@ int main()
     int i;
     int node;
     int idex = 0;
-
     int start = 0;
     
     int loop = start + 50;

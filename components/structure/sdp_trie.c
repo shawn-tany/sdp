@@ -344,7 +344,7 @@ int sdp_trie_path_entry(SDP_TRIE_ROOT_T *root, sdp_trie_entry_handle_func_t func
     int i   = 0;
     int ret = 0;
 
-    sdp_stack_t *stack = NULL;
+    SDP_STACK_T *stack = NULL;
     SDP_TRIE_NODE_T  *node  = NULL;
 
     stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
@@ -404,7 +404,7 @@ int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
     int i   = 0;
     int ret = 0;
 
-    sdp_stack_t *stack = NULL;
+    SDP_STACK_T *stack = NULL;
     SDP_TRIE_NODE_T  *node  = NULL;
 
     void *child_data[MAX_CHILD_DEPTH];
@@ -430,7 +430,7 @@ int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
         sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!sdp_stack_top(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
+    while (!SDP_STACK_Top(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         depth = node->depth;
 
@@ -477,7 +477,7 @@ int sdp_trie_each_entry_accord_hierarchy(SDP_TRIE_ROOT_T *root, sdp_trie_entry_h
     int i   = 0;
     int ret = 0;
 
-    sdp_stack_t *stack = NULL;
+    SDP_STACK_T *stack = NULL;
     SDP_TRIE_NODE_T  *node  = NULL;
 
     stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));
@@ -533,7 +533,7 @@ int sdp_trie_uinit(SDP_TRIE_ROOT_T *root)
 
     int i = 0;
 
-    sdp_stack_t *stack = NULL;
+    SDP_STACK_T *stack = NULL;
     SDP_TRIE_NODE_T  *node  = NULL;
 
     stack = sdp_stack_create(root->total_node_num, sizeof(SDP_TRIE_NODE_T *));

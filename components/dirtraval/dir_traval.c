@@ -12,7 +12,7 @@
     if (!p)                     \
         return DIR_ERR_PARAM;   \
 
-static DIR_STATUS_T dir_node_enqueue(sdp_queue_t *queue, const char *fname, int is_dir, int depth)
+static DIR_STATUS_T dir_node_enqueue(SDP_QUEUE_T *queue, const char *fname, int is_dir, int depth)
 {    
     PTR_CHECK(queue);
     PTR_CHECK(fname);
@@ -31,7 +31,7 @@ static DIR_STATUS_T dir_node_enqueue(sdp_queue_t *queue, const char *fname, int 
     return DIR_SUCCESS;
 }
 
-static DIR_STATUS_T dir_node_enstack(sdp_stack_t *stack, const char *fname, int is_dir, int depth)
+static DIR_STATUS_T dir_node_enstack(SDP_STACK_T *stack, const char *fname, int is_dir, int depth)
 {
     PTR_CHECK(stack);
     PTR_CHECK(fname);
@@ -151,7 +151,7 @@ DIR_STATUS_T dir_push(dir_ctx_t *ctx)
         return DIR_SUCCESS;
     }
 
-    while (!sdp_stack_top(ctx->stack, &dir_node, sizeof(dir_node)))
+    while (!SDP_STACK_Top(ctx->stack, &dir_node, sizeof(dir_node)))
     {
         if (ctx->last_depth == dir_node.depth)
         {

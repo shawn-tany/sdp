@@ -430,7 +430,7 @@ int sdp_trie_path_list(SDP_TRIE_ROOT_T *root, sdp_trie_path_handle_func_t func)
         sdp_enstack(stack, (void *)(&root->root.node[i]), sizeof(SDP_TRIE_NODE_T *));
     }
 
-    while (!SDP_STACK_Top(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
+    while (!sdp_stack_top(stack, (void *)(&node), sizeof(SDP_TRIE_NODE_T *)))
     {
         depth = node->depth;
 

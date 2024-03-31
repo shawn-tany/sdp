@@ -151,7 +151,7 @@ DIR_STATUS_T dir_push(dir_ctx_t *ctx)
         return DIR_SUCCESS;
     }
 
-    while (!SDP_STACK_Top(ctx->stack, &dir_node, sizeof(dir_node)))
+    while (!sdp_stack_top(ctx->stack, &dir_node, sizeof(dir_node)))
     {
         if (ctx->last_depth == dir_node.depth)
         {

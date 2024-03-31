@@ -16,24 +16,24 @@ SDP_STACK_T *sdp_stack_create(int node_num, int node_size)
 
     stack = (SDP_STACK_T *)malloc(sizeof(SDP_STACK_T));
 
-    if (!stack) {
+    if (!stack) 
+    {
         return NULL;
     }
 
     stack->addr = malloc(node_num * node_size);
-
-    if (!stack->addr) {
+    if (!stack->addr) 
+    {
         return NULL;
     }
 
     memset(stack->addr, 0, node_num * node_size);
 
-    stack->top = stack->addr;
-    stack->prod = stack->addr;
-
+    stack->top = 0;
+    stack->prod = 0;
     stack->total = node_num;
     stack->avail = node_num;
-    stack->offset = node_size;
+    stack->node_size = node_size;
 
     return stack;
 }
@@ -44,24 +44,33 @@ int sdp_enstack(SDP_STACK_T *stack, void *node, int size)
     PTR_CHECK(node);
     PTR_CHECK(stack->addr);
 
-    if (size > stack->offset) {
+    void *prod_addr = NULL;
+
+    if (size > stack->node_size) 
+    {
         return -2;
     }
 
-    if (!stack->avail) {
+    if (!stack->avail) 
+    {
         return -3;
     }
 
-    memcpy(stack->prod, node, size);
-
-    if (stack->prod > stack->addr + (stack->offset * stack->total) ||
-        stack->prod + stack->offset > stack->addr + (stack->offset * stack->total)) {
-        
-        stack->prod = stack->addr;
+    if (stack->prod >= stack->total)
+    {
+        stack->prod = 0;
     }
 
-    stack->prod = stack->prod + stack->offset;
-    
+    if (stack->top >= stack->total)
+    {
+        stack->top = 0;
+    }
+
+    prod_addr = stack->addr + (stack->prod * stack->node_size);
+
+    memcpy(prod_addr, node, size);
+
+    stack->top = stack->prod++;
     stack->avail--;
 
     return 0;
@@ -73,66 +82,80 @@ int sdp_destack(SDP_STACK_T *stack, void *node, int size)
     PTR_CHECK(node);
     PTR_CHECK(stack->addr);
 
-    if (stack->avail == stack->total) {
+    void *top_addr = NULL;
+
+    if (stack->avail == stack->total) 
+    {
         return -4;
     }
 
-    if (stack->offset < size) {
+    if (stack->node_size < size) 
+    {
         return -5;
     }
 
-    stack->top = stack->prod - stack->offset;
-
-    if (stack->top < stack->addr) {
-        stack->prod = stack->addr + ((stack->total - 1) * stack->offset);
+    if (stack->top < 0) 
+    {
+        stack->top = 0;
     }
 
-    memcpy(node, stack->top, size);
+    if (stack->prod < 0)
+    {
+        stack->prod = 0;
+    }
+
+    top_addr = stack->addr + (stack->top * stack->node_size);
+
+    memcpy(node, top_addr, size);
     
-    stack->prod = stack->prod - stack->offset;
+    stack->prod--;
+    stack->top--;
     
     stack->avail++;
 
     return 0;
 }
 
-int SDP_STACK_Top(SDP_STACK_T *stack, void *node, int size)
+int sdp_stack_top(SDP_STACK_T *stack, void *node, int size)
 {
     PTR_CHECK(stack);
     PTR_CHECK(node);
     PTR_CHECK(stack->addr);
 
-    if (stack->avail == stack->total) {
+    void *top_addr = NULL;
+
+    if (stack->avail == stack->total) 
+    {
         return -4;
     }
 
-    if (stack->offset < size) {
+    if (stack->node_size < size) 
+    {
         return -5;
     }
 
-    void *top = NULL;
+    top_addr = stack->addr + (stack->top * stack->node_size);
 
-    top = stack->prod - stack->offset;
-
-    memcpy(node, top, size);
+    memcpy(node, top_addr, size);
     
     return 0;
 }
 
 void sdp_stack_free(SDP_STACK_T *stack)
 {
-    if (stack) {
-        if (stack->addr) {
+    if (stack) 
+    {
+        if (stack->addr) 
+        {
             free(stack->addr);
             stack->addr = NULL;
         }
 
-        stack->prod = NULL;
-        stack->top = NULL;
-        
+        stack->prod = 0;
+        stack->top = 0;
         stack->total = 0;
         stack->avail = 0;
-        stack->offset = 0;
+        stack->node_size = 0;
 
         free(stack);
     }

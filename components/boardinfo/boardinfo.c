@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "cpu.h"
+#include "boardinfo.h"
 
 #define BI_CPU_INFO_FILE "/proc/cpuinfo"
 #define BI_CPU_STAT_FILE "/proc/stat"
+
+#define BI_MEM_INFO_FILE "/proc/meminfo"
 
 static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
 {
@@ -73,6 +75,81 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
     fclose(fp);
     
     return ret;
+}
+
+static int cal_cpu_usagerate(CPU_STAT_T *newstat, CPU_STAT_T *oldstat, float *rate)  
+{
+    if (!newstat || !oldstat || !rate)
+    {
+        return -1;
+    }
+
+    if (!strlen(oldstat->name))
+    {
+        *rate = 0;
+        return 0;
+    }
+
+    unsigned long old_time = 0;
+    unsigned long new_time = 0;
+    unsigned long user_step = 0;
+    unsigned long sys_step = 0;
+    
+    old_time = (unsigned long) (oldstat->user + oldstat->nice + oldstat->system + oldstat->idle);
+
+    new_time = (unsigned long) (newstat->user + newstat->nice + newstat->system + newstat->idle);
+    
+    user_step = (unsigned long) (newstat->user - oldstat->user);
+    
+    sys_step = (unsigned long) (newstat->system - oldstat->system);
+    
+    if((new_time - old_time) != 0)
+    {
+         *rate = (float)((user_step + sys_step) * 100) / (new_time - old_time);
+    }     
+    else
+    {   
+        return -1;
+    }
+
+    return 0; 
+}
+
+static int bi_meminfo_get(MEM_INFO_T *minfo)
+{
+    if (!minfo)
+    {
+        return -1;
+    }
+
+    FILE *fd = NULL;
+    char line[1024] = {0};
+
+    fd = fopen (BI_MEM_INFO_FILE, "r");
+    if (0 > fd)
+    {
+        perror("fopen");
+        return -1;
+    }
+
+    fgets(line, sizeof(line), fd);
+    minfo->mem_total = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fd);
+    minfo->mem_free = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fd);
+    minfo->mem_available = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fd);
+    minfo->mem_buffers = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fd);
+    minfo->mem_cached = strtol((line + 15), NULL, 10);
+    
+    fclose(fd);
+
+    return 0;
 }
 
 int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
@@ -193,10 +270,6 @@ int bi_cpustat_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
     char buff[32] = {0};
     CPU_STAT_T cur_stat = {0};
     int ret = -1;
-    long totol_time_cur = 0;
-    long idle_time_cur = 0;
-    long totol_time_last = 0;
-    long idle_time_last = 0;
 
     if (!rate || !cpu_stat)
     {
@@ -218,9 +291,8 @@ int bi_cpustat_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
             continue;
         }
 
-        sscanf(line, "cpu %ld %ld %ld %ld %ld %ld %ld", 
-                    &cur_stat.user, &cur_stat.nice, &cur_stat.system, 
-                    &cur_stat.idle, &cur_stat.iowait, &cur_stat.irq, &cur_stat.softirq);
+        sscanf(line, "cpu %s %ld %ld %ld %ld", cur_stat.name, &cur_stat.user, 
+                &cur_stat.nice, &cur_stat.system, &cur_stat.idle);
 
         ret = 0;
         break;
@@ -228,22 +300,126 @@ int bi_cpustat_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
 
     fclose(fp);
 
-    totol_time_last = cpu_stat->user + cpu_stat->nice + cpu_stat->system + 
-                      cpu_stat->idle + cpu_stat->iowait + cpu_stat->irq + cpu_stat->softirq;
-    idle_time_last = cpu_stat->idle;
+    if (0 > cal_cpu_usagerate(&cur_stat, cpu_stat, rate))
+    {
+        return -1;
+    }
 
     *cpu_stat = cur_stat;
 
-    if (!totol_time_last)
+    return ret;
+}
+
+int bi_mem_usagerate_get(float *rate)
+{
+    if (!rate)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
     {
         return -1;
     }
     
-    totol_time_cur = cur_stat.user + cur_stat.nice + cur_stat.system + 
-                      cur_stat.idle + cur_stat.iowait + cur_stat.irq + cur_stat.softirq;
-    idle_time_cur = cur_stat.idle;
+    *rate = (float)(100 * (minfo.mem_total - (minfo.mem_free + minfo.mem_buffers + minfo.mem_cached)) / minfo.mem_total);
 
-    *rate = 100.0 * (1.0 - (float)(idle_time_cur - idle_time_last) / (float)(totol_time_cur - totol_time_last));
+    return 0;
+}
 
-    return ret;
+int bi_mem_totalsize_get(int *size)
+{
+    if (!size)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
+    {
+        return -1;
+    }
+    
+    *size = minfo.mem_total;
+
+    return 0;
+}
+
+int bi_mem_avaliablesize_get(int *size)
+{
+    if (!size)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
+    {
+        return -1;
+    }
+    
+    *size = minfo.mem_available;
+
+    return 0;
+}
+
+int bi_mem_freesize_get(int *size)
+{
+    if (!size)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
+    {
+        return -1;
+    }
+    
+    *size = minfo.mem_free;
+
+    return 0;
+}
+
+int bi_mem_buffersize_get(int *size)
+{
+    if (!size)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
+    {
+        return -1;
+    }
+    
+    *size = minfo.mem_buffers;
+
+    return 0;
+}
+
+int bi_mem_cachedsize_get(int *size)
+{
+    if (!size)
+    {
+        return -1;
+    }
+
+    MEM_INFO_T minfo = {0};
+
+    if (0 > bi_meminfo_get(&minfo))
+    {
+        return -1;
+    }
+    
+    *size = minfo.mem_cached;
+
+    return 0;
 }

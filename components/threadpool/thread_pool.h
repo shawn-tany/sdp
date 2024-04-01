@@ -5,7 +5,7 @@
 
 #include "sdp_queue.h"
 
-typedef void (*thread_event_func_t)(void *, int);
+typedef void* (*thread_event_func_t)(void *, int);
 
 typedef enum 
 {
@@ -44,5 +44,7 @@ THREAD_POOL_T *thread_pool_create(int thread_num, int event_queue_num);
 int thread_pool_destory(THREAD_POOL_T *pool, int force);
 
 int thread_event_add(THREAD_POOL_T *pool, thread_event_func_t func, void *arg, int arg_size);
+
+int thread_event_add_wait(THREAD_POOL_T *pool, thread_event_func_t func, void *arg, int arg_size);
 
 #endif

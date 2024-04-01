@@ -3,20 +3,25 @@
 
 #include "thread_pool.h"
 
-static void event_test(void *arg, int arg_size)
+#define TEST_NUM 5000
+
+int test[TEST_NUM];
+
+static void *event_test(void *arg, int arg_size)
 {
     printf("event(%d) test\n", *(int *)arg);
 
-    sleep(1);
+    usleep(1000 * 100);
+
+    return NULL;
 }
 
 int main(int argc, char *argv[])
 {
     int i = 0;
-    int args[200] = {0};
     THREAD_POOL_T *pool = NULL;
 
-    pool = thread_pool_create(0, 200);
+    pool = thread_pool_create(36, 200);
     if (!pool)
     {
         printf("thread_pool_create failed\n");
@@ -25,11 +30,23 @@ int main(int argc, char *argv[])
 
     for (i = 0; i < 200; ++i)
     {
-        args[i] = i + 1;
-
-        if (0 > thread_event_add(pool, event_test, (void *)(&(args[i])), sizeof(args[i])))
+        test[i] = i + 1;
+    
+        if (0 > thread_event_add(pool, event_test, (void *)(&(test[i])), sizeof(test[i])))
         {
             printf("thread_event_add failed\n");
+            thread_pool_destory(pool, 1);
+            return -1;
+        }
+    }
+
+    for (i = 200; i < TEST_NUM; ++i)
+    {
+        test[i] = i + 1;
+    
+        if (0 > thread_event_add_wait(pool, event_test, (void *)(&(test[i])), sizeof(test[i])))
+        {
+            printf("thread_event_add timeout\n");
             thread_pool_destory(pool, 1);
             return -1;
         }

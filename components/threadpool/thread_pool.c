@@ -17,6 +17,12 @@ static void *thread_task_work(void *arg)
     {
         pthread_mutex_lock(&(pool->lock));
 
+        /* wait event */
+        while (sdp_queue_empty(pool->event_queue) && THREAD_POOL_RUNNING == pool->status)
+        {
+            pthread_cond_wait(&(pool->notify), &(pool->lock));
+        }
+        
         /* task exit */
         if (THREAD_POOL_STOP == pool->status)
         {
@@ -24,19 +30,9 @@ static void *thread_task_work(void *arg)
             break;
         }
 
-        if (sdp_queue_empty(pool->event_queue))
-        {
-            pthread_mutex_unlock(&(pool->lock));
-            continue;
-        }
-
-        /* wait event */
-        //pthread_cond_wait(&(pool->notify), &(pool->lock));
-
         /* get event */
         if (0 > sdp_dequeue(pool->event_queue, (void *)(&event), sizeof(event)))
         {
-            printf("failed to get event\n");
             pthread_mutex_unlock(&(pool->lock));
             continue;
         }
@@ -125,19 +121,26 @@ int thread_pool_destory(THREAD_POOL_T *pool, int force)
     {
         while (pool->working_num && !sdp_queue_empty(pool->event_queue))
         {
-            usleep(200);
+            usleep(1000);
         }
     }
 
+    pthread_mutex_lock(&(pool->lock));
+
     /* updata thread pool status to stop */
     pool->status = THREAD_POOL_STOP;
+
+    /* walk up all thread */
+    pthread_cond_broadcast(&(pool->notify));
+
+    pthread_mutex_unlock(&(pool->lock));
 
     /* wait task */
     for (i = 0; i < pool->working_num; ++i)
     {
         pthread_join(pool->tasks[i].pthread, NULL);
     }
-
+    
     /* free resource */
     free(pool->tasks);
     sdp_queue_free(pool->event_queue);
@@ -171,7 +174,53 @@ int thread_event_add(THREAD_POOL_T *pool, thread_event_func_t func, void *arg, i
     }
 
     /* report event */
-    // pthread_cond_signal(&(pool->notify));
+    pthread_cond_signal(&(pool->notify));
+
+    pthread_mutex_unlock(&(pool->lock));
+
+    return 0;
+}
+
+int thread_event_add_wait(THREAD_POOL_T *pool, thread_event_func_t func, void *arg, int arg_size)
+{
+    PTR_CHECK_N1(pool);
+    PTR_CHECK_N1(func);
+    PTR_CHECK_N1(arg);
+
+    /* new event */
+    THREAD_EVENT_T event = {
+        .func     = func,
+        .arg      = arg,
+        .arg_size = arg_size
+    };
+
+    /* wait event queue avaliable */
+    while (1)
+    {        
+        pthread_mutex_lock(&(pool->lock));
+        
+        if (!sdp_queue_full(pool->event_queue))
+        {
+            pthread_mutex_unlock(&(pool->lock));
+            break;
+        }
+        
+        pthread_mutex_unlock(&(pool->lock));
+
+        usleep(200);
+    }
+    
+    pthread_mutex_lock(&(pool->lock));
+
+    /* submit event */
+    if (0 > sdp_enqueue(pool->event_queue, (void *)(&event), sizeof(event)))
+    {
+        pthread_mutex_unlock(&(pool->lock));
+        return -1;
+    }
+
+    /* report event */
+    pthread_cond_signal(&(pool->notify));
 
     pthread_mutex_unlock(&(pool->lock));
 

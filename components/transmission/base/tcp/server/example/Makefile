@@ -21,6 +21,7 @@ CFLAGS += -I $(SOURCE_DIR)/..
 CFLAGS += -I $(COMMON_DIR)
 CFLAGS += -I $(COMPONENTS_DIR)/structure
 CFLAGS += -I $(COMPONENTS_DIR)/threadpool
+CFLAGS += -lpthread
 
 ALL : compile_check compile
 

@@ -115,6 +115,10 @@ TCP_CLIENT_T * tcp_client_init(char *ip, UINT16_T port, char *ethdev)
         return NULL;
     }
 
+    snprintf(client->info.ip, sizeof(client->info.ip), "%s", ip);
+    client->info.port = port;
+    snprintf(client->info.ethdev, sizeof(client->info.ethdev), "%s", ethdev);
+
     if (0 > _tcp_client_init(client))
     {
         printf("ERROR : tcp client connect failed\n");

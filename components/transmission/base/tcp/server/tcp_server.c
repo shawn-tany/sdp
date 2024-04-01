@@ -86,9 +86,9 @@ TCP_SERVER_T *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
     return server;
 }
 
-static void tcp_server_task_loop(void *arg, int arg_size)
+static void *tcp_server_task_loop(void *arg, int arg_size)
 {
-    PTR_CHECK_VOID(arg);
+    PTR_CHECK_NULL(arg);
 
     char w_buffer[1024] = {0};
     char r_buffer[1024] = {0};
@@ -122,6 +122,8 @@ static void tcp_server_task_loop(void *arg, int arg_size)
     }
 
     close(task->socket);
+
+    return NULL;
 }
 
 int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts)

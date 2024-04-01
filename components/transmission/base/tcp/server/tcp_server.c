@@ -112,7 +112,7 @@ static void *tcp_server_task_loop(void *arg, int arg_size)
             task->func.recv_complete_callback(r_buffer, length);
         }
 
-        task->func.send_encap_callback(r_buffer, sizeof(w_buffer), &length);
+        task->func.send_encap_callback(w_buffer, sizeof(w_buffer), &length);
 
         if (0 > send(task->socket, w_buffer, length, 0))
         {
@@ -154,6 +154,7 @@ int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts)
         if (0 > sock) 
         {
             perror("accept error");
+            thread_pool_destory(server->work.pool, 1);
             return -1;
         }
 

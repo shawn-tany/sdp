@@ -176,7 +176,7 @@ int tcp_client_recv(TCP_CLIENT_T *client, void *data, int data_len)
 
     while ((recvtm++ <= TCP_RECV_TIMEOUT))
     {
-        length = recv(ready, data + offset, data_len - offset, MSG_DONTWAIT);
+        length = recv(client->desc.sock, data + offset, data_len - offset, MSG_DONTWAIT);
         if(0 > length)
         {
             if ((EAGAIN == errno) || (EWOULDBLOCK == errno))

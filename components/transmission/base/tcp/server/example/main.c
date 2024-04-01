@@ -28,6 +28,7 @@ int send_encap_callback_test(void *data, int data_size, int *data_len)
 int main(int argc, char *argv[])
 {
     TCP_SERVER_T *server = NULL;
+    
     TCP_SERVER_FUNC_T func = {
         .recv_complete_callback = recv_complete_callback_test,
         .send_encap_callback = send_encap_callback_test,

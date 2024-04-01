@@ -324,7 +324,7 @@ int bi_mem_usagerate_get(float *rate)
         return -1;
     }
     
-    *rate = (float)(100 * (minfo.mem_total - (minfo.mem_free + minfo.mem_buffers + minfo.mem_cached)) / minfo.mem_total);
+    *rate = 100 * (float)(minfo.mem_total - (minfo.mem_free + minfo.mem_buffers + minfo.mem_cached)) / minfo.mem_total;
 
     return 0;
 }

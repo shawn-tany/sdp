@@ -3,6 +3,10 @@
 
 #include "boardinfo.h"
 
+#define TERM_HEAD_CLEAR         printf("\033[2J\033[0;0H");
+#define TERM_CORS_CLEAR         printf("\033[K");
+#define TERM_CORS_MOVE(x, y)    printf("\033[%d;%dH", y, x);
+
 int main()
 {
     char buffer[1024] = {0};
@@ -12,6 +16,8 @@ int main()
     int size = 0;
     float usage_rate = 0;
     CPU_STAT_T cpu_stat[8] = {0};
+
+    TERM_HEAD_CLEAR;
     
     printf("\n--------------cpu info-----------\n");
 
@@ -101,7 +107,10 @@ int main()
     }
     
     while (1)
-    {        
+    {
+        TERM_CORS_MOVE(0, 22);
+        TERM_CORS_CLEAR;
+    
         printf("\n--------------rate info----------\n");
     
         for (i = 0; i < cpu_num; ++i)
@@ -112,7 +121,7 @@ int main()
             }
             else
             {
-                printf("CPU(%d) usagerate       : %.2f\n", i, usage_rate);
+                printf("CPU(%d) usagerate       : %.2f%%\n", i, usage_rate);
             }
         }
 
@@ -122,10 +131,10 @@ int main()
         }
         else
         {
-            printf("Memory usagerate       : %.2f\n", usage_rate);
+            printf("Memory usagerate       : %.2f%%\n", usage_rate);
         }
 
-        sleep(5);
+        sleep(1);
     }
 
     return 0;

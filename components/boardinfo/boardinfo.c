@@ -10,11 +10,13 @@
 
 #define BI_MEM_INFO_FILE "/proc/meminfo"
 
+#define BI_DSK_INFO_FILE "/proc/diskstats"
+
 static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
 {
     FILE *fp;
     char *ptr = NULL;
-    char  line[1024] = {0};    
+    char  line[256] = {0};    
     int   num = 0;
     int   length = 0;
     int   ret = -1;
@@ -77,86 +79,11 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
     return ret;
 }
 
-static int cal_cpu_usagerate(CPU_STAT_T *newstat, CPU_STAT_T *oldstat, float *rate)  
-{
-    if (!newstat || !oldstat || !rate)
-    {
-        return -1;
-    }
-
-    if (!strlen(oldstat->name))
-    {
-        *rate = 0;
-        return 0;
-    }
-
-    unsigned long old_time = 0;
-    unsigned long new_time = 0;
-    unsigned long user_step = 0;
-    unsigned long sys_step = 0;
-    
-    old_time = (unsigned long) (oldstat->user + oldstat->nice + oldstat->system + oldstat->idle);
-
-    new_time = (unsigned long) (newstat->user + newstat->nice + newstat->system + newstat->idle);
-    
-    user_step = (unsigned long) (newstat->user - oldstat->user);
-    
-    sys_step = (unsigned long) (newstat->system - oldstat->system);
-    
-    if((new_time - old_time) != 0)
-    {
-         *rate = (float)((user_step + sys_step) * 100) / (new_time - old_time);
-    }     
-    else
-    {   
-        return -1;
-    }
-
-    return 0; 
-}
-
-static int bi_meminfo_get(MEM_INFO_T *minfo)
-{
-    if (!minfo)
-    {
-        return -1;
-    }
-
-    FILE *fd = NULL;
-    char line[1024] = {0};
-
-    fd = fopen (BI_MEM_INFO_FILE, "r");
-    if (0 > fd)
-    {
-        perror("fopen");
-        return -1;
-    }
-
-    fgets(line, sizeof(line), fd);
-    minfo->mem_total = strtol((line + 15), NULL, 10);
-
-    fgets(line, sizeof(line), fd);
-    minfo->mem_free = strtol((line + 15), NULL, 10);
-
-    fgets(line, sizeof(line), fd);
-    minfo->mem_available = strtol((line + 15), NULL, 10);
-
-    fgets(line, sizeof(line), fd);
-    minfo->mem_buffers = strtol((line + 15), NULL, 10);
-
-    fgets(line, sizeof(line), fd);
-    minfo->mem_cached = strtol((line + 15), NULL, 10);
-    
-    fclose(fd);
-
-    return 0;
-}
-
-int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
+static int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
 {
     FILE *fp;
     char *ptr = NULL;
-    char  line[1024] = {0};    
+    char  line[256] = {0};    
     int   num = 0;
     int   ret = -1;
 
@@ -216,6 +143,119 @@ int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
     return ret;
 }
 
+static int cal_cpu_usagerate(CPU_STAT_T *newstat, CPU_STAT_T *oldstat, float *rate)  
+{
+    if (!newstat || !oldstat || !rate)
+    {
+        return -1;
+    }
+
+    if (!strlen(oldstat->name))
+    {
+        *rate = 0;
+        return 0;
+    }
+
+    unsigned long old_time = 0;
+    unsigned long new_time = 0;
+    unsigned long user_step = 0;
+    unsigned long sys_step = 0;
+    
+    old_time = (unsigned long) (oldstat->user + oldstat->nice + oldstat->system + oldstat->idle);
+
+    new_time = (unsigned long) (newstat->user + newstat->nice + newstat->system + newstat->idle);
+    
+    user_step = (unsigned long) (newstat->user - oldstat->user);
+    
+    sys_step = (unsigned long) (newstat->system - oldstat->system);
+    
+    if((new_time - old_time) != 0)
+    {
+         *rate = (float)((user_step + sys_step) * 100) / (new_time - old_time);
+    }     
+    else
+    {   
+        return -1;
+    }
+
+    return 0; 
+}
+
+static int bi_meminfo_get(MEM_INFO_T *minfo)
+{
+    if (!minfo)
+    {
+        return -1;
+    }
+
+    FILE *fp = NULL;
+    char line[256] = {0};
+
+    fp = fopen (BI_MEM_INFO_FILE, "r");
+    if (0 > fp)
+    {
+        perror("fopen");
+        return -1;
+    }
+
+    fgets(line, sizeof(line), fp);
+    minfo->mem_total = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fp);
+    minfo->mem_free = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fp);
+    minfo->mem_available = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fp);
+    minfo->mem_buffers = strtol((line + 15), NULL, 10);
+
+    fgets(line, sizeof(line), fp);
+    minfo->mem_cached = strtol((line + 15), NULL, 10);
+    
+    fclose(fp);
+
+    return 0;
+}
+
+static int bi_diskinfo_get(DISK_STAT_T *dstat)
+{
+    if (!dstat)
+    {
+        return -1;
+    }
+
+    FILE *fp = NULL;
+    char line[256] = {0};
+
+    int major = 0;
+    int minor = 0;
+
+    fp = fopen (BI_DSK_INFO_FILE, "r");
+    if (!fp)
+    {
+        perror("fopen");
+        return -1;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        sscanf(line, "%d %d", &major, &minor);
+
+        if (0 != minor)
+        {
+            continue;
+        }
+
+        printf("%s\n", line);
+    }
+    
+    fclose(fp);
+
+    return 0;
+}
+
+
 int bi_cpuinfo_num_get(int *cpu_num)
 {
     if (!cpu_num)
@@ -229,6 +269,10 @@ int bi_cpuinfo_num_get(int *cpu_num)
     {
         return -1;
     }
+
+    DISK_STAT_T dstat = {0};
+
+    bi_diskinfo_get(&dstat);
 
     return 0;
 }
@@ -423,3 +467,5 @@ int bi_mem_cachedsize_get(int *size)
 
     return 0;
 }
+
+

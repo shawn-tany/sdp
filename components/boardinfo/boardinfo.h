@@ -19,6 +19,34 @@ typedef struct
     int mem_cached;
 } MEM_INFO_T;
 
+typedef struct 
+{
+    char name[20];
+    
+    int major_number;
+    int minor_number;
+    
+    int read_success_times;
+    int read_merged_times;
+    int read_sector_total;
+    int read_ms_total;
+    
+    int write_success_times;
+    int write_merged_times;
+    int write_sector_total;
+    int write_ms_total;
+
+    int io_program_req;
+    int io_doing_ms_total;
+    int io_doing_ms_weight_total;
+} DISK_INFO_T;
+
+typedef struct 
+{
+    int disk_num;
+    DISK_INFO_T info[20];
+} DISK_STAT_T;
+
 /* cpu info */
 int bi_cpuinfo_num_get(int *cpu_num);
 

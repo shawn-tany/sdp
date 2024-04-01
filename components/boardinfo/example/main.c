@@ -16,6 +16,7 @@ int main()
     int size = 0;
     float usage_rate = 0;
     CPU_STAT_T cpu_stat[8] = {0};
+    int times = 100;
 
     TERM_HEAD_CLEAR;
     
@@ -106,7 +107,7 @@ int main()
         printf("Memory cachedsize      : %d K\n", size);
     }
     
-    while (1)
+    while (times--)
     {
         TERM_CORS_MOVE(0, 22);
         TERM_CORS_CLEAR;

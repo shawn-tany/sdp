@@ -19,6 +19,14 @@
 static CPU_STAT_T g_cpu_stat[MAX_CPU_NUM] = {0};
 static CPU_STAT_T g_cpu_stat_total= {0};
 
+static struct 
+{
+    char *prefix;
+    int prefix_len;
+} g_disk_prefix_table[] = {
+    { "sd", 2 }
+};
+
 static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
 {
     FILE *fp;
@@ -247,8 +255,7 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
     FILE *fp = NULL;
     char line[256] = {0};
 
-    int major = 0;
-    int minor = 0;
+    int i = 0;
     int index = 0;
     int headline = 1;
 
@@ -273,19 +280,30 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
         {
             continue;
         }
-    
-        sscanf(line, "%d %d", &major, &minor);
+        
+        index = dstat->disk_num;
+        
+        sscanf(line, "%d %d %d %s", 
+                &dstat->info[index].major_number, &dstat->info[index].minor_number, 
+                &dstat->info[index].total_size, dstat->info[index].name);
 
-        if (0 != minor)
+        if (0 != dstat->info[index].minor_number)
         {
             continue;
         }
 
-        index = dstat->disk_num;
-
-        sscanf(line, "%d %d %d %s", 
-                &dstat->info[index].major_number, &dstat->info[index].minor_number, 
-                &dstat->info[index].total_size, dstat->info[index].name);
+        for (i = 0; i < ITEM(g_disk_prefix_table); ++i)
+        {
+            if (!strncmp(dstat->info[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
+            {
+                break;
+            }
+        }
+        
+        if (i >= ITEM(g_disk_prefix_table))
+        {
+            continue;
+        }
 
         dstat->disk_num++;
 

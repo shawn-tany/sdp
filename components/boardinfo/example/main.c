@@ -12,11 +12,13 @@ int main()
     char buffer[1024] = {0};
     int i = 0;
     int cpu_num = 0;
+    int disk_num = 0;
     int freq = 0;
     int size = 0;
     float usage_rate = 0;
     CPU_STAT_T cpu_stat[8] = {0};
     int times = 100;
+    int lineoffset = 1;
 
     TERM_HEAD_CLEAR;
     
@@ -31,9 +33,11 @@ int main()
         printf("CPU num                : %d\n", cpu_num);
     }
 
+    lineoffset += 3;
+
     for (i = 0; i < cpu_num; ++i)
     {
-        if (0 > bi_cpu_name_get(0, buffer, sizeof(buffer)))
+        if (0 > bi_cpu_name_get(i, buffer, sizeof(buffer)))
         {
             printf("get cpu info failed\n");
         }
@@ -42,7 +46,7 @@ int main()
             printf("CPU(%d) name            : %s\n", i, buffer);
         }
 
-        if (0 > bi_cpu_freq_get(0, &freq))
+        if (0 > bi_cpu_freq_get(i, &freq))
         {
             printf("get cpu freq failed\n");
         }
@@ -51,7 +55,7 @@ int main()
             printf("CPU(%d) freq            : %d MHz\n", i, freq);
         }
 
-        if (0 > bi_cpu_cachesize_get(0, &size))
+        if (0 > bi_cpu_cachesize_get(i, &size))
         {
             printf("get cpu cachesize failed\n");
         }
@@ -59,6 +63,8 @@ int main()
         {
             printf("CPU(%d) cachesize       : %d K\n", i, size);
         }  
+
+        lineoffset += 3;
     }
     
     printf("\n--------------mem info-----------\n");
@@ -107,16 +113,54 @@ int main()
         printf("Memory cachedsize      : %d K\n", size);
     }
     
+    lineoffset += 7;
+
+    printf("\n--------------disk info----------\n");
+
+    if (0 > bi_disk_num_get(&disk_num))
+    {
+        printf("get disk num failed\n");
+    }
+    else
+    {
+        printf("DISK num               : %d\n", disk_num);
+    }
+    
+    lineoffset += 3;
+
+    for (i = 0; i < disk_num; ++i)
+    {
+        if (0 > bi_disk_name_get(i, buffer, sizeof(buffer)))
+        {
+            printf("get disk info failed\n");
+        }
+        else
+        {
+            printf("DISK(%d) name           : %s\n", i, buffer);
+        }
+
+        if (0 > bi_disk_size_get(i, &size))
+        {
+            printf("get disk size failed\n");
+        }
+        else
+        {
+            printf("DISK(%d) size           : %d\n", i, size);
+        }
+
+        lineoffset += 2;
+    }
+    
     while (times--)
     {
-        TERM_CORS_MOVE(0, 22);
+        TERM_CORS_MOVE(0, lineoffset);
         TERM_CORS_CLEAR;
     
         printf("\n--------------rate info----------\n");
     
         for (i = 0; i < cpu_num; ++i)
         {
-            if (0 > bi_cpu_usagerate_get(0, &cpu_stat[i], &usage_rate))
+            if (0 > bi_cpu_usagerate_get(i, &cpu_stat[i], &usage_rate))
             {
                 printf("get cpu usagerate failed\n");
             }

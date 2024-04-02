@@ -1,8 +1,7 @@
 .vscode/
-mult-ftp/source/mftp
 mult-ftp/build/
-cli/build/
 components/boardinfo/example/build/
+components/cmdline/example/build/
 components/dirtraval/example/build/
 components/threadpool/example/build/
 components/transmission/base/tcp/client/example/build

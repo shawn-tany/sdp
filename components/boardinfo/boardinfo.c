@@ -10,7 +10,7 @@
 
 #define BI_MEM_INFO_FILE "/proc/meminfo"
 
-#define BI_DSK_INFO_FILE "/proc/diskstats"
+#define BI_DSK_INFO_FILE "/proc/partitions"
 
 #define ITEM(a) (sizeof(a) / sizeof(a[0]))
 
@@ -41,7 +41,13 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
             continue;
         }
 
-        num = strtol(line, NULL, 10);
+        ptr = strchr(line, ':');
+        if (!ptr)
+        {
+            break;
+        }
+
+        num = strtol(ptr + 1, NULL, 10);
         
         if (num != cpu_socket) 
         {
@@ -107,13 +113,19 @@ static int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
             continue;
         }
 
-        num = strtol(line, NULL, 10);
+        ptr = strchr(line, ':');
+        if (!ptr)
+        {
+            break;
+        }
+
+        num = strtol(ptr + 1, NULL, 10);
         
         if (num != cpu_socket) 
         {
             continue;
         }
-
+        
         while (fgets(line, sizeof(line), fp)) 
         {
             if ('\n' == line[0])
@@ -233,6 +245,7 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
     int major = 0;
     int minor = 0;
     int index = 0;
+    int headline = 1;
 
     fp = fopen (BI_DSK_INFO_FILE, "r");
     if (!fp)
@@ -241,8 +254,21 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
         return -1;
     }
 
+    dstat->disk_num = 0;
+
     while (fgets(line, sizeof(line), fp))
     {
+        if (headline)
+        {
+            headline = 0;
+            continue;
+        }
+    
+        if ('#' == line[0] || '\n' == line[0])
+        {
+            continue;
+        }
+    
         sscanf(line, "%d %d", &major, &minor);
 
         if (0 != minor)
@@ -250,16 +276,11 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
             continue;
         }
 
-        index= dstat->disk_num;
+        index = dstat->disk_num;
 
-        sscanf(line, "%d %d %s %d %d %d %d %d %d %d %d %d %d %d", 
-                &dstat->info[index].major_number, &dstat->info[index].minor_number, dstat->info[index].name, 
-                &dstat->info[index].read_success_times, &dstat->info[index].read_merged_times, 
-                &dstat->info[index].read_sector_total, &dstat->info[index].read_ms_total,
-                &dstat->info[index].write_success_times, &dstat->info[index].write_merged_times, 
-                &dstat->info[index].write_merged_times, &dstat->info[index].write_ms_total, 
-                &dstat->info[index].io_program_req, &dstat->info[index].io_doing_ms_total, 
-                &dstat->info[index].io_doing_ms_weight_total);
+        sscanf(line, "%d %d %d %s", 
+                &dstat->info[index].major_number, &dstat->info[index].minor_number, 
+                &dstat->info[index].total_size, dstat->info[index].name);
 
         dstat->disk_num++;
 
@@ -288,10 +309,6 @@ int bi_cpu_num_get(int *cpu_num)
     {
         return -1;
     }
-
-    DISK_STAT_T dstat = {0};
-
-    bi_diskinfo_get(&dstat);
 
     return 0;
 }
@@ -354,7 +371,7 @@ int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
             continue;
         }
 
-        sscanf(line, "cpu %s %ld %ld %ld %ld", cur_stat.name, &cur_stat.user, 
+        sscanf(line, "%s %ld %ld %ld %ld", cur_stat.name, &cur_stat.user, 
                 &cur_stat.nice, &cur_stat.system, &cur_stat.idle);
 
         ret = 0;
@@ -362,6 +379,11 @@ int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
     }
 
     fclose(fp);
+
+    if (0 != ret)
+    {
+        return ret;
+    }
 
     if (0 > cal_cpu_usagerate(&cur_stat, cpu_stat, rate))
     {
@@ -520,7 +542,7 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
         return -1;
     }
 
-    if (disk_index >= ITEM(dstat.info))
+    if (disk_index >= ITEM(dstat.info) || disk_index >= dstat.disk_num)
     {
         return -1;
     }
@@ -530,9 +552,9 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
     return 0;
 }
 
-int bi_disk_name_get(int disk_index, char *name, int name_size)
+int bi_disk_size_get(int disk_index, int *size)
 {
-    if (!name)
+    if (!size)
     {
         return -1;
     }
@@ -544,13 +566,13 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
         return -1;
     }
 
-    if (disk_index >= ITEM(dstat.info))
+    if (disk_index >= ITEM(dstat.info) || disk_index >= dstat.disk_num)
     {
         return -1;
     }
 
-    snprintf(name, name_size, "%s", dstat.info[disk_index].name);
-
+    *size = dstat.info[disk_index].total_size;
+    
     return 0;
 }
 

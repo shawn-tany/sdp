@@ -22,23 +22,9 @@ typedef struct
 typedef struct 
 {
     char name[20];
-    
     int major_number;
     int minor_number;
-    
-    int read_success_times;
-    int read_merged_times;
-    int read_sector_total;
-    int read_ms_total;
-    
-    int write_success_times;
-    int write_merged_times;
-    int write_sector_total;
-    int write_ms_total;
-
-    int io_program_req;
-    int io_doing_ms_total;
-    int io_doing_ms_weight_total;
+    int total_size;
 } DISK_INFO_T;
 
 typedef struct 
@@ -72,5 +58,10 @@ int bi_mem_buffersize_get(int *size);
 int bi_mem_cachedsize_get(int *size);
 
 /* disk info */
+int bi_disk_num_get(int *disk_num);
+
+int bi_disk_name_get(int disk_index, char *name, int name_size);
+
+int bi_disk_size_get(int disk_index, int *size);
 
 #endif

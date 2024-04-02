@@ -1,38 +1,6 @@
 #ifndef CPU_INFO
 #define CPU_INFO
 
-typedef struct 
-{
-    char name[20];
-    long user;
-    long nice;
-    long system;
-    long idle;
-} CPU_STAT_T;
-
-typedef struct
-{
-    int mem_total;
-    int mem_free;
-    int mem_available;
-    int mem_buffers;
-    int mem_cached;
-} MEM_INFO_T;
-
-typedef struct 
-{
-    char name[20];
-    int major_number;
-    int minor_number;
-    int total_size;
-} DISK_INFO_T;
-
-typedef struct 
-{
-    int disk_num;
-    DISK_INFO_T info[20];
-} DISK_STAT_T;
-
 /* cpu info */
 int bi_cpu_num_get(int *cpu_num);
 

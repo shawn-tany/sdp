@@ -16,6 +16,38 @@
 
 #define MAX_CPU_NUM 64
 
+typedef struct 
+{
+    char name[20];
+    long user;
+    long nice;
+    long system;
+    long idle;
+} CPU_STAT_T;
+
+typedef struct
+{
+    int mem_total;
+    int mem_free;
+    int mem_available;
+    int mem_buffers;
+    int mem_cached;
+} MEM_INFO_T;
+
+typedef struct 
+{
+    char name[20];
+    int major_number;
+    int minor_number;
+    int total_size;
+} DISK_INFO_T;
+
+typedef struct 
+{
+    int disk_num;
+    DISK_INFO_T info[20];
+} DISK_STAT_T;
+
 static CPU_STAT_T g_cpu_stat[MAX_CPU_NUM] = {0};
 static CPU_STAT_T g_cpu_stat_total= {0};
 

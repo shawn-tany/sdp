@@ -54,4 +54,6 @@ TCP_SERVER_T *tcp_server_init(char *ip, UINT16_T port, char *ethdev);
 
 int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts);
 
+int tcp_server_destory(TCP_SERVER_T *server);
+
 #endif

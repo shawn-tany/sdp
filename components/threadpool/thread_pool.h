@@ -16,8 +16,9 @@ typedef enum
 typedef struct 
 {
     thread_event_func_t func; 
-    void *arg;
-    int arg_size;
+    int arg_total_size;
+    int arg_used_size;
+    char arg[0];
 } THREAD_EVENT_T;
 
 typedef struct 
@@ -33,13 +34,16 @@ typedef struct
     pthread_mutex_t lock;
     pthread_cond_t  notify;
 
-    THRAED_TASK_T *tasks;
-    SDP_QUEUE_T   *event_queue; 
+    THRAED_TASK_T  *tasks;
+    SDP_QUEUE_T    *event_queue;
+
+    int event_cache_size;
+    THREAD_EVENT_T *event_cache;
 
     THREAD_POOL_STATUS_T status;
 } THREAD_POOL_T;
 
-THREAD_POOL_T *thread_pool_create(int thread_num, int event_queue_num);
+THREAD_POOL_T *thread_pool_create(int thread_num, int event_num, int arg_size);
 
 int thread_pool_destory(THREAD_POOL_T *pool, int force);
 

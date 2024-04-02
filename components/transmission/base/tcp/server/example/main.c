@@ -43,5 +43,7 @@ int main(int argc, char *argv[])
 
     tcp_server_loop(server, &func);
 
+    tcp_server_destory(server);
+
     return 0;
 }

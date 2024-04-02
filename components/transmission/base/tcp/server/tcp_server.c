@@ -74,7 +74,7 @@ TCP_SERVER_T *tcp_server_init(char *ip, UINT16_T port, char *ethdev)
     listen(server->desc.socket, TCP_MAX_CLIENT);
 
     /* tcp server thread pool */
-    server->work.pool = thread_pool_create(TCP_MAX_CLIENT, TCP_MAX_EVENT);
+    server->work.pool = thread_pool_create(TCP_MAX_CLIENT, TCP_MAX_EVENT, sizeof(TCP_SERVER_TASK_T));
     if (!server->work.pool)
     {
         printf("failed to create tcp server thread pool\n");
@@ -105,6 +105,7 @@ static void *tcp_server_task_loop(void *arg, int arg_size)
         }
         else if (0 == length)
         {
+            printf("connection closed\n");
             break;
         }
         else
@@ -164,7 +165,8 @@ int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts)
         if (0 > thread_event_add(server->work.pool, tcp_server_task_loop, (void *)(&task), sizeof(task)))
         {
             printf("add tcp client event to queue failed\n");
-            break;
+            thread_pool_destory(server->work.pool, 1);
+            return -1;
         }
 
         server->work.work_count++;
@@ -173,3 +175,15 @@ int tcp_server_loop(TCP_SERVER_T *server, TCP_SERVER_FUNC_T *func_opts)
     return 0;
 }
 
+int tcp_server_destory(TCP_SERVER_T *server)
+{
+    PTR_CHECK_N1(server);
+
+    close(server->desc.socket);
+
+    thread_pool_destory(server->work.pool, 0);
+
+    free(server);
+
+    return 0;
+}

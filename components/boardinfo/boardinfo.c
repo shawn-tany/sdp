@@ -12,6 +12,8 @@
 
 #define BI_DSK_INFO_FILE "/proc/diskstats"
 
+#define ITEM(a) (sizeof(a) / sizeof(a[0]))
+
 static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
 {
     FILE *fp;
@@ -230,6 +232,7 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
 
     int major = 0;
     int minor = 0;
+    int index = 0;
 
     fp = fopen (BI_DSK_INFO_FILE, "r");
     if (!fp)
@@ -247,7 +250,23 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
             continue;
         }
 
-        printf("%s\n", line);
+        index= dstat->disk_num;
+
+        sscanf(line, "%d %d %s %d %d %d %d %d %d %d %d %d %d %d", 
+                &dstat->info[index].major_number, &dstat->info[index].minor_number, dstat->info[index].name, 
+                &dstat->info[index].read_success_times, &dstat->info[index].read_merged_times, 
+                &dstat->info[index].read_sector_total, &dstat->info[index].read_ms_total,
+                &dstat->info[index].write_success_times, &dstat->info[index].write_merged_times, 
+                &dstat->info[index].write_merged_times, &dstat->info[index].write_ms_total, 
+                &dstat->info[index].io_program_req, &dstat->info[index].io_doing_ms_total, 
+                &dstat->info[index].io_doing_ms_weight_total);
+
+        dstat->disk_num++;
+
+        if (dstat->disk_num >= (sizeof(dstat->info) / sizeof(dstat->info[0])))
+        {
+            break;
+        }
     }
     
     fclose(fp);
@@ -256,7 +275,7 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
 }
 
 
-int bi_cpuinfo_num_get(int *cpu_num)
+int bi_cpu_num_get(int *cpu_num)
 {
     if (!cpu_num)
     {
@@ -277,7 +296,7 @@ int bi_cpuinfo_num_get(int *cpu_num)
     return 0;
 }
 
-int bi_cpuinfo_name_get(int cpu_socket, char *cpu_name, int cpu_name_size)
+int bi_cpu_name_get(int cpu_socket, char *cpu_name, int cpu_name_size)
 {
     if (!cpu_name)
     {
@@ -287,7 +306,7 @@ int bi_cpuinfo_name_get(int cpu_socket, char *cpu_name, int cpu_name_size)
     return bi_cpuinfo_string_get(cpu_socket, "model name", cpu_name, cpu_name_size);
 }
 
-int bi_cpuinfo_freq_get(int cpu_socket, int *freq)
+int bi_cpu_freq_get(int cpu_socket, int *freq)
 {
     if (!freq)
     {
@@ -297,7 +316,7 @@ int bi_cpuinfo_freq_get(int cpu_socket, int *freq)
     return bi_cpuinfo_int_get(cpu_socket, "cpu MHz", freq);
 }
 
-int bi_cpuinfo_cachesize_get(int cpu_socket, int *size)
+int bi_cpu_cachesize_get(int cpu_socket, int *size)
 {
     if (!size)
     {
@@ -307,7 +326,7 @@ int bi_cpuinfo_cachesize_get(int cpu_socket, int *size)
     return bi_cpuinfo_int_get(cpu_socket, "cache size", size);    
 }
 
-int bi_cpustat_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
+int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
 {
     FILE* fp = NULL;
     char line[256] = {0};
@@ -468,4 +487,70 @@ int bi_mem_cachedsize_get(int *size)
     return 0;
 }
 
+int bi_disk_num_get(int *disk_num)
+{
+    if (!disk_num)
+    {
+        return -1;
+    }
+
+    DISK_STAT_T dstat = {0};
+
+    if (0 > bi_diskinfo_get(&dstat))
+    {
+        return -1;
+    }
+
+    *disk_num = dstat.disk_num;
+
+    return 0;
+}
+
+int bi_disk_name_get(int disk_index, char *name, int name_size)
+{
+    if (!name)
+    {
+        return -1;
+    }
+
+    DISK_STAT_T dstat = {0};
+
+    if (0 > bi_diskinfo_get(&dstat))
+    {
+        return -1;
+    }
+
+    if (disk_index >= ITEM(dstat.info))
+    {
+        return -1;
+    }
+
+    snprintf(name, name_size, "%s", dstat.info[disk_index].name);
+
+    return 0;
+}
+
+int bi_disk_name_get(int disk_index, char *name, int name_size)
+{
+    if (!name)
+    {
+        return -1;
+    }
+
+    DISK_STAT_T dstat = {0};
+
+    if (0 > bi_diskinfo_get(&dstat))
+    {
+        return -1;
+    }
+
+    if (disk_index >= ITEM(dstat.info))
+    {
+        return -1;
+    }
+
+    snprintf(name, name_size, "%s", dstat.info[disk_index].name);
+
+    return 0;
+}
 

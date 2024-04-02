@@ -22,7 +22,7 @@ int main()
     
     printf("\n--------------cpu info-----------\n");
 
-    if (0 > bi_cpuinfo_num_get(&cpu_num))
+    if (0 > bi_cpu_num_get(&cpu_num))
     {
         printf("get cpu num failed\n");
     }
@@ -33,7 +33,7 @@ int main()
 
     for (i = 0; i < cpu_num; ++i)
     {
-        if (0 > bi_cpuinfo_name_get(0, buffer, sizeof(buffer)))
+        if (0 > bi_cpu_name_get(0, buffer, sizeof(buffer)))
         {
             printf("get cpu info failed\n");
         }
@@ -42,7 +42,7 @@ int main()
             printf("CPU(%d) name            : %s\n", i, buffer);
         }
 
-        if (0 > bi_cpuinfo_freq_get(0, &freq))
+        if (0 > bi_cpu_freq_get(0, &freq))
         {
             printf("get cpu freq failed\n");
         }
@@ -51,7 +51,7 @@ int main()
             printf("CPU(%d) freq            : %d MHz\n", i, freq);
         }
 
-        if (0 > bi_cpuinfo_cachesize_get(0, &size))
+        if (0 > bi_cpu_cachesize_get(0, &size))
         {
             printf("get cpu cachesize failed\n");
         }
@@ -116,7 +116,7 @@ int main()
     
         for (i = 0; i < cpu_num; ++i)
         {
-            if (0 > bi_cpustat_usagerate_get(0, &cpu_stat[i], &usage_rate))
+            if (0 > bi_cpu_usagerate_get(0, &cpu_stat[i], &usage_rate))
             {
                 printf("get cpu usagerate failed\n");
             }

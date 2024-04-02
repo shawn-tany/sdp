@@ -27,7 +27,7 @@ static struct
     { "sd", 2 }
 };
 
-static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
+static int bi_cpuinfo_string_get(int cpu_index, char *key, char *string, int string_size)
 {
     FILE *fp;
     char *ptr = NULL;
@@ -62,7 +62,7 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
 
         num = strtol(ptr + 1, NULL, 10);
         
-        if (num != cpu_socket) 
+        if (num != cpu_index) 
         {
             continue;
         }
@@ -100,7 +100,7 @@ static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int st
     return ret;
 }
 
-static int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
+static int bi_cpuinfo_int_get(int cpu_index, char *key, int *value)
 {
     FILE *fp;
     char *ptr = NULL;
@@ -134,7 +134,7 @@ static int bi_cpuinfo_int_get(int cpu_socket, char *key, int *value)
 
         num = strtol(ptr + 1, NULL, 10);
         
-        if (num != cpu_socket) 
+        if (num != cpu_index) 
         {
             continue;
         }
@@ -336,37 +336,37 @@ int bi_cpu_num_get(int *cpu_num)
     return 0;
 }
 
-int bi_cpu_name_get(int cpu_socket, char *cpu_name, int cpu_name_size)
+int bi_cpu_name_get(int cpu_index, char *cpu_name, int cpu_name_size)
 {
     if (!cpu_name)
     {
         return -1;
     }
     
-    return bi_cpuinfo_string_get(cpu_socket, "model name", cpu_name, cpu_name_size);
+    return bi_cpuinfo_string_get(cpu_index, "model name", cpu_name, cpu_name_size);
 }
 
-int bi_cpu_freq_get(int cpu_socket, int *freq)
+int bi_cpu_freq_get(int cpu_index, int *freq)
 {
     if (!freq)
     {
         return -1;
     }
     
-    return bi_cpuinfo_int_get(cpu_socket, "cpu MHz", freq);
+    return bi_cpuinfo_int_get(cpu_index, "cpu MHz", freq);
 }
 
-int bi_cpu_cachesize_get(int cpu_socket, int *size)
+int bi_cpu_cachesize_get(int cpu_index, int *size)
 {
     if (!size)
     {
         return -1;
     }
     
-    return bi_cpuinfo_int_get(cpu_socket, "cache size", size);    
+    return bi_cpuinfo_int_get(cpu_index, "cache size", size);    
 }
 
-int bi_cpu_usagerate_get(int cpu_socket, float *rate)
+int bi_cpu_usagerate_get(int cpu_index, float *rate)
 {
     FILE* fp = NULL;
     char line[256] = {0};
@@ -375,20 +375,20 @@ int bi_cpu_usagerate_get(int cpu_socket, float *rate)
     CPU_STAT_T  cur_stat = {0};
     int ret = -1;
 
-    if (!rate || MAX_CPU_NUM <= cpu_socket)
+    if (!rate || MAX_CPU_NUM <= cpu_index)
     {
         return -1;
     }
 
-    if (0 > cpu_socket)
+    if (0 > cpu_index)
     {
         last_stat = &g_cpu_stat_total;
         snprintf(buff, sizeof(buff), "cpu");
     }
     else
     {
-        last_stat = &g_cpu_stat[cpu_socket];
-        snprintf(buff, sizeof(buff), "cpu%d", cpu_socket);
+        last_stat = &g_cpu_stat[cpu_index];
+        snprintf(buff, sizeof(buff), "cpu%d", cpu_index);
     }
 
     fp = fopen(BI_CPU_STAT_FILE, "r");

@@ -36,13 +36,13 @@ typedef struct
 /* cpu info */
 int bi_cpu_num_get(int *cpu_num);
 
-int bi_cpu_name_get(int cpu_socket, char *cpu_name, int cpu_name_size);
+int bi_cpu_name_get(int cpu_index, char *cpu_name, int cpu_name_size);
 
-int bi_cpu_freq_get(int cpu_socket, int *freq);
+int bi_cpu_freq_get(int cpu_index, int *freq);
 
-int bi_cpu_cachesize_get(int cpu_socket, int *size);
+int bi_cpu_cachesize_get(int cpu_index, int *size);
 
-int bi_cpu_usagerate_get(int cpu_socket, float *rate);
+int bi_cpu_usagerate_get(int cpu_index, float *rate);
 
 int bi_cpu_total_usagerate_get(float *rate);
 

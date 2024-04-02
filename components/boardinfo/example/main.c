@@ -16,8 +16,6 @@ int main()
     int freq = 0;
     int size = 0;
     float usage_rate = 0;
-    CPU_STAT_T cpu_stat[8] = {0};
-    CPU_STAT_T cpu_stat_total= {0};
     int times = 100;
     int lineoffset = 1;
 
@@ -159,7 +157,7 @@ int main()
     
         printf("\n--------------rate info----------\n");
 
-        if (0 > bi_cpu_total_usagerate_get(&cpu_stat_total, &usage_rate))
+        if (0 > bi_cpu_total_usagerate_get(&usage_rate))
         {
             printf("get cpu total usagerate failed\n");
         }
@@ -170,7 +168,7 @@ int main()
     
         for (i = 0; i < cpu_num; ++i)
         {
-            if (0 > bi_cpu_usagerate_get(i, &cpu_stat[i], &usage_rate))
+            if (0 > bi_cpu_usagerate_get(i, &usage_rate))
             {
                 printf("get cpu usagerate failed\n");
             }

@@ -14,6 +14,11 @@
 
 #define ITEM(a) (sizeof(a) / sizeof(a[0]))
 
+#define MAX_CPU_NUM 64
+
+static CPU_STAT_T g_cpu_stat[MAX_CPU_NUM] = {0};
+static CPU_STAT_T g_cpu_stat_total= {0};
+
 static int bi_cpuinfo_string_get(int cpu_socket, char *key, char *string, int string_size)
 {
     FILE *fp;
@@ -343,25 +348,28 @@ int bi_cpu_cachesize_get(int cpu_socket, int *size)
     return bi_cpuinfo_int_get(cpu_socket, "cache size", size);    
 }
 
-int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
+int bi_cpu_usagerate_get(int cpu_socket, float *rate)
 {
     FILE* fp = NULL;
     char line[256] = {0};
     char buff[32] = {0};
-    CPU_STAT_T cur_stat = {0};
+    CPU_STAT_T *last_stat = NULL;
+    CPU_STAT_T  cur_stat = {0};
     int ret = -1;
 
-    if (!rate || !cpu_stat)
+    if (!rate || MAX_CPU_NUM <= cpu_socket)
     {
         return -1;
     }
 
     if (0 > cpu_socket)
     {
+        last_stat = &g_cpu_stat_total;
         snprintf(buff, sizeof(buff), "cpu");
     }
     else
     {
+        last_stat = &g_cpu_stat[cpu_socket];
         snprintf(buff, sizeof(buff), "cpu%d", cpu_socket);
     }
 
@@ -392,24 +400,24 @@ int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
         return ret;
     }
 
-    if (0 > cal_cpu_usagerate(&cur_stat, cpu_stat, rate))
+    if (0 > cal_cpu_usagerate(&cur_stat, last_stat, rate))
     {
         return -1;
     }
 
-    *cpu_stat = cur_stat;
+    *last_stat = cur_stat;
 
     return ret;
 }
 
-int bi_cpu_total_usagerate_get(CPU_STAT_T *cpu_stat, float *rate)
+int bi_cpu_total_usagerate_get(float *rate)
 {
-    if (!cpu_stat || !rate)
+    if (!rate)
     {
         return -1;
     }
 
-    return bi_cpu_usagerate_get(-1, cpu_stat, rate);
+    return bi_cpu_usagerate_get(-1, rate);
 }
 
 

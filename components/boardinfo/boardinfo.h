@@ -44,6 +44,8 @@ int bi_cpu_cachesize_get(int cpu_socket, int *size);
 
 int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate);
 
+int bi_cpu_total_usagerate_get(CPU_STAT_T *cpu_stat, float *rate);
+
 /* memory info */
 int bi_mem_usagerate_get(float *rate);
 

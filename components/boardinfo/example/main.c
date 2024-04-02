@@ -17,6 +17,7 @@ int main()
     int size = 0;
     float usage_rate = 0;
     CPU_STAT_T cpu_stat[8] = {0};
+    CPU_STAT_T cpu_stat_total= {0};
     int times = 100;
     int lineoffset = 1;
 
@@ -157,6 +158,15 @@ int main()
         TERM_CORS_CLEAR;
     
         printf("\n--------------rate info----------\n");
+
+        if (0 > bi_cpu_total_usagerate_get(&cpu_stat_total, &usage_rate))
+        {
+            printf("get cpu total usagerate failed\n");
+        }
+        else
+        {
+            printf("CPU total usagerate    : %.2f%%\n", usage_rate);
+        }
     
         for (i = 0; i < cpu_num; ++i)
         {

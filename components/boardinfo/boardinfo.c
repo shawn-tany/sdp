@@ -356,7 +356,14 @@ int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
         return -1;
     }
 
-    snprintf(buff, sizeof(buff), "cpu%d", cpu_socket);
+    if (0 > cpu_socket)
+    {
+        snprintf(buff, sizeof(buff), "cpu");
+    }
+    else
+    {
+        snprintf(buff, sizeof(buff), "cpu%d", cpu_socket);
+    }
 
     fp = fopen(BI_CPU_STAT_FILE, "r");
     if (!fp) 
@@ -394,6 +401,17 @@ int bi_cpu_usagerate_get(int cpu_socket, CPU_STAT_T *cpu_stat, float *rate)
 
     return ret;
 }
+
+int bi_cpu_total_usagerate_get(CPU_STAT_T *cpu_stat, float *rate)
+{
+    if (!cpu_stat || !rate)
+    {
+        return -1;
+    }
+
+    return bi_cpu_usagerate_get(-1, cpu_stat, rate);
+}
+
 
 int bi_mem_usagerate_get(float *rate)
 {

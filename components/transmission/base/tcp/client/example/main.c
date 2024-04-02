@@ -19,10 +19,18 @@ int main(int argc, char *argv[])
     while (1)
     {
         snprintf(buffer, sizeof(buffer), "tcp client send test aaabbbccc");
+        
         length = strlen(buffer);
-        tcp_client_send(client, buffer, length);
+        if (0 > tcp_client_send(client, buffer, length))
+        {
+            break;
+        }
 
-        tcp_client_recv(client, buffer, length);
+        if (0 > tcp_client_recv(client, buffer, length))
+        {
+            break;
+        }
+        
         printf("tcp client recv : %s\n", buffer);
     }
 

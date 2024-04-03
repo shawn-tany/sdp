@@ -18,6 +18,8 @@ int main()
     float usage_rate = 0;
     int times = 100;
     int lineoffset = 1;
+    double cov_value = 0.0;
+    int cov_unit = 0;
 
     TERM_HEAD_CLEAR;
     
@@ -60,7 +62,8 @@ int main()
         }
         else
         {
-            printf("CPU(%d) cachesize       : %d K\n", i, size);
+            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            printf("CPU(%d) cachesize       : %.2f%s\n", i, cov_value, bi_unit_str(cov_unit));
         }  
 
         lineoffset += 3;
@@ -68,12 +71,13 @@ int main()
     
     printf("\n--------------mem info-----------\n");
     if (0 > bi_mem_totalsize_get(&size))
-    {
+    {    
         printf("get memory totalsize failed\n");
     }
     else
-    {
-        printf("Memory totalsize       : %d K\n", size);
+    {        
+        bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+        printf("Memory totalsize       : %.2f%s\n", cov_value, bi_unit_str(cov_unit));
     }
 
     if (0 > bi_mem_freesize_get(&size))
@@ -81,8 +85,9 @@ int main()
         printf("get memory freesize failed\n");
     }
     else
-    {
-        printf("Memory freesize        : %d K\n", size);
+    {        
+        bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+        printf("Memory freesize        : %.2f%s\n", cov_value, bi_unit_str(cov_unit));
     }
 
     if (0 > bi_mem_avaliablesize_get(&size))
@@ -90,8 +95,9 @@ int main()
         printf("get memory avaliablesize failed\n");
     }
     else
-    {
-        printf("Memory avaliablesize   : %d K\n", size);
+    {    
+        bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+        printf("Memory avaliablesize   : %.2f%s\n", cov_value, bi_unit_str(cov_unit));
     }
 
     if (0 > bi_mem_buffersize_get(&size))
@@ -99,8 +105,9 @@ int main()
         printf("get memory buffersize failed\n");
     }
     else
-    {
-        printf("Memory buffersize      : %d K\n", size);
+    {    
+        bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+        printf("Memory buffersize      : %.2f%s\n", cov_value, bi_unit_str(cov_unit));
     }
 
     if (0 > bi_mem_cachedsize_get(&size))
@@ -108,8 +115,9 @@ int main()
         printf("get memory cachedsize failed\n");
     }
     else
-    {
-        printf("Memory cachedsize      : %d K\n", size);
+    {    
+        bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+        printf("Memory cachedsize      : %.2f%s\n", cov_value, bi_unit_str(cov_unit));
     }
     
     lineoffset += 7;
@@ -143,8 +151,9 @@ int main()
             printf("get disk size failed\n");
         }
         else
-        {
-            printf("DISK(%d) size           : %d\n", i, size);
+        {        
+            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            printf("DISK(%d) size           : %.2f%s\n", i, cov_value, bi_unit_str(cov_unit));
         }
 
         lineoffset += 2;

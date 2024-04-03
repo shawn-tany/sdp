@@ -11,7 +11,7 @@ typedef struct
     char d_name[FILE_NAME_SIZE];
     int is_dir;
     int depth;
-} dir_node_t;
+} DIR_NODE_T;
 
 typedef struct 
 {
@@ -21,7 +21,7 @@ typedef struct
     
     SDP_STACK_T *stack;
     SDP_QUEUE_T *queue;
-} dir_ctx_t;
+} DIR_CTX_T;
 
 typedef enum
 {
@@ -41,13 +41,13 @@ typedef enum
     DIR_ALL_OVER
 } DIR_STATUS_T;
 
-DIR_STATUS_T dir_init(dir_ctx_t * * ctx, const char * path, int file_num);
+DIR_STATUS_T dir_init(DIR_CTX_T * * ctx, const char * path, int file_num);
 
-DIR_STATUS_T dir_uinit(dir_ctx_t * ctx);
+DIR_STATUS_T dir_uinit(DIR_CTX_T * ctx);
 
-DIR_STATUS_T dir_push(dir_ctx_t * ctx);
+DIR_STATUS_T dir_push(DIR_CTX_T * ctx);
 
-DIR_STATUS_T dir_pop(dir_ctx_t *ctx, dir_node_t *node);
+DIR_STATUS_T dir_pop(DIR_CTX_T *ctx, DIR_NODE_T *node);
 
 
 #endif

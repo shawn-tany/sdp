@@ -652,3 +652,47 @@ int bi_disk_size_get(int disk_index, int *size)
     return 0;
 }
 
+int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, int *dst_unit)
+{
+    if (!dst || !dst_unit)
+    {
+        return -1;
+    }
+
+    double value = src;
+    int unit = src_unit;
+
+    if (UNIT_TYPE_BIT == src_unit)
+    {
+        if (!((long long)value % 8) && ((long long)value / 8))
+        {
+            value /= 8;
+            unit++;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    while (1 <= (value / 1024))
+    {
+        value /= 1024;
+        unit++;
+    }
+
+    *dst = value;
+    *dst_unit = unit;
+
+    return 0;
+}
+
+char *bi_unit_str(int unit)
+{
+    return (UNIT_TYPE_BIT  == unit) ? "bit"  :
+           (UNIT_TYPE_BYTE == unit) ? "byte" :
+           (UNIT_TYPE_KB   == unit) ? "KB"   :
+           (UNIT_TYPE_MB   == unit) ? "MB"   :
+           (UNIT_TYPE_GB   == unit) ? "GB"   : "unkown";
+}
+

@@ -17,7 +17,7 @@ static DIR_STATUS_T dir_node_enqueue(SDP_QUEUE_T *queue, const char *fname, int 
     PTR_CHECK(queue);
     PTR_CHECK(fname);
 
-    dir_node_t node;
+    DIR_NODE_T node;
 
     snprintf(node.d_name, sizeof(node.d_name), "%s", fname);
     node.is_dir = is_dir;
@@ -36,7 +36,7 @@ static DIR_STATUS_T dir_node_enstack(SDP_STACK_T *stack, const char *fname, int 
     PTR_CHECK(stack);
     PTR_CHECK(fname);
 
-    dir_node_t node;
+    DIR_NODE_T node;
 
     snprintf(node.d_name, sizeof(node.d_name), "%s", fname);
     node.is_dir = is_dir;
@@ -50,7 +50,7 @@ static DIR_STATUS_T dir_node_enstack(SDP_STACK_T *stack, const char *fname, int 
     return DIR_SUCCESS;
 }
 
-DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
+DIR_STATUS_T dir_init(DIR_CTX_T **ctx, const char *path, int file_num)
 {
     PTR_CHECK(ctx);
     PTR_CHECK(path);
@@ -64,7 +64,7 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
         goto TRAVAL_FAILED;
     }
 
-    (*ctx) = (dir_ctx_t *)malloc(sizeof(dir_ctx_t));
+    (*ctx) = (DIR_CTX_T *)malloc(sizeof(DIR_CTX_T));
 
     if (!(*ctx))
     {
@@ -72,7 +72,7 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
         goto TRAVAL_FAILED;
     }
 
-    (*ctx)->queue = sdp_queue_create(file_num, sizeof(dir_node_t));
+    (*ctx)->queue = sdp_queue_create(file_num, sizeof(DIR_NODE_T));
 
     if (!(*ctx)->queue)
     {
@@ -80,7 +80,7 @@ DIR_STATUS_T dir_init(dir_ctx_t **ctx, const char *path, int file_num)
         goto TRAVAL_FAILED;
     }
 
-    (*ctx)->stack = sdp_stack_create(file_num, sizeof(dir_node_t));
+    (*ctx)->stack = sdp_stack_create(file_num, sizeof(DIR_NODE_T));
 
     if (!(*ctx)->stack) 
     {
@@ -115,7 +115,7 @@ TRAVAL_FAILED :
     return ret;
 }
 
-DIR_STATUS_T dir_uinit(dir_ctx_t *ctx)
+DIR_STATUS_T dir_uinit(DIR_CTX_T *ctx)
 {
     if (ctx->queue)
     {
@@ -135,13 +135,13 @@ DIR_STATUS_T dir_uinit(dir_ctx_t *ctx)
     return DIR_SUCCESS;
 }
 
-DIR_STATUS_T dir_push(dir_ctx_t *ctx)
+DIR_STATUS_T dir_push(DIR_CTX_T *ctx)
 {
     PTR_CHECK(ctx);
 
     DIR *pDir = NULL;
     char f_name[512] = {0};
-    dir_node_t dir_node;
+    DIR_NODE_T dir_node;
     DIR_STATUS_T ret = DIR_SUCCESS;
 
     memset(&dir_node, 0, sizeof(dir_node));
@@ -213,7 +213,7 @@ DIR_STATUS_T dir_push(dir_ctx_t *ctx)
     return DIR_SUCCESS;
 }
 
-DIR_STATUS_T dir_pop(dir_ctx_t *ctx, dir_node_t *node)
+DIR_STATUS_T dir_pop(DIR_CTX_T *ctx, DIR_NODE_T *node)
 {
     PTR_CHECK(ctx);
     PTR_CHECK(node);

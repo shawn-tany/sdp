@@ -1,6 +1,19 @@
 #ifndef CPU_INFO
 #define CPU_INFO
 
+typedef enum 
+{
+    UNIT_TYPE_BIT = 0,
+    UNIT_TYPE_BYTE,
+    UNIT_TYPE_KB,
+    UNIT_TYPE_MB,
+    UNIT_TYPE_GB,
+} UNIT_TYPE_T;
+
+char *bi_unit_str(int unit);
+
+int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, int *dst_unit);
+
 /* cpu info */
 int bi_cpu_num_get(int *cpu_num);
 

@@ -100,7 +100,7 @@ static int bi_cpuinfo_string_get(int cpu_index, char *key, char *string, int str
     }
     
     fp = fopen(BI_CPU_INFO_FILE, "r");
-    if (fp == NULL) 
+    if (!fp) 
     {
         return -1;
     }
@@ -172,7 +172,7 @@ static int bi_cpuinfo_int_get(int cpu_index, char *key, int *value)
     }
     
     fp = fopen(BI_CPU_INFO_FILE, "r");
-    if (fp == NULL) 
+    if (!fp) 
     {
         return -1;
     }
@@ -277,7 +277,7 @@ static int bi_meminfo_get(MEM_INFO_T *minfo)
     char line[256] = {0};
 
     fp = fopen (BI_MEM_INFO_FILE, "r");
-    if (0 > fp)
+    if (!fp)
     {
         perror("fopen");
         return -1;
@@ -375,76 +375,6 @@ static int bi_diskinfo_get(DISKS_INFO_T *dinfo)
 
     return 0;
 }
-
-static int bi_diskstat_get(DISKS_STAT_T *dstat)
-{
-    if (!dstat)
-    {
-        return -1;
-    }
-
-    FILE *fp;
-    char buffer[256];
-    int i = 0;
-    int index = 0;
-    int headline = 1;
-
-    dstat->disk_num = 0;
-    
-    fp = fopen(BI_DSK_STAT_FILE, "r");
-    if (!fp) 
-    {
-        return -1;
-    }
-  
-    while (fgets(buffer, sizeof(buffer), fp)) 
-    {
-        if (headline)
-        {
-            headline = 0;
-            continue;
-        }
-    
-        index = dstat->disk_num;
-    
-        sscanf(buffer, "%d %d %s %lu %lu %lu %lu %lu %lu %lu %lu\n",
-                &(dstat->stat[index].major_number), &(dstat->stat[index].major_number), (dstat->stat[index].name),  
-                &(dstat->stat[index].rd_ios), &(dstat->stat[index].rd_merges), 
-                &(dstat->stat[index].rd_sectors), &(dstat->stat[index].rd_ticks),
-                &(dstat->stat[index].wr_ios), &(dstat->stat[index].wr_merges), 
-                &(dstat->stat[index].wr_sectors), &(dstat->stat[index].wr_ticks));
-
-        if (0 != dstat->stat[index].minor_number)
-        {
-            continue;
-        }
-
-        for (i = 0; i < ITEM(g_disk_prefix_table); ++i)
-        {
-            if (!strncmp(dstat->stat[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
-            {
-                break;
-            }
-        }
-        
-        if (i >= ITEM(g_disk_prefix_table))
-        {
-            continue;
-        }
-                
-        dstat->disk_num++;
-
-        if (dstat->disk_num >= ITEM(dstat->stat))
-        {
-            break;
-        }
-    }
- 
-    fclose(fp);
-    
-    return 0;
-}
-
 
 int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *dst_unit)
 {
@@ -791,36 +721,6 @@ int bi_disk_size_get(int disk_index, int *size)
     return 0;
 }
 
-int bi_disk_io_usagerate_get(int disk_index, float *rate)
-{
-    if (!rate)
-    {
-        return -1;
-    }
-
-    DISKS_STAT_T dstat = {0};
-
-    float rd_sec = 0.0;
-    float wr_sec = 0.0;
-
-    if (0 > bi_diskstat_get(&dstat))
-    {
-        return -1;
-    }
-
-    if (disk_index >= ITEM(dstat.stat) || disk_index >= dstat.disk_num)
-    {
-        return -1;
-    }
-
-    rd_sec = dstat.stat[disk_index].rd_ios ? (dstat.stat[disk_index].rd_sectors / dstat.stat[disk_index].rd_ios) : 0;
-
-    wr_sec = dstat.stat[disk_index].wr_ios ? (dstat.stat[disk_index].wr_sectors / dstat.stat[disk_index].wr_ios) : 0;
-
-    *rate = (rd_sec + wr_sec) / 2;
-    
-    return 0;
-}
 
 int bi_disk_usagerate_get(int disk_index, float *rate)
 {
@@ -836,7 +736,6 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
     char mountpath[256] = {0};
     char dstdiskname[256] = {0};
     int ret = -1;
-    int i = 0;
     int headline = 1;
     unsigned long long used_size = 0;
     unsigned long long total_size = 0;
@@ -870,28 +769,10 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
 
         snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s", dinfo.info[disk_index].name);
 
-        if (!strcmp(dstdiskname, diskname))
+        if (strncmp(dstdiskname, diskname, strlen(dstdiskname)))
         {
-            ret = 0;
-        }
-        else
-        {
-            for (i = 1; i < 8; ++i)
-            {
-                snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s%d", dinfo.info[disk_index].name, i);
-        
-                if (!strcmp(dstdiskname, diskname))
-                {
-                    ret = 0;
-                    break;
-                }
-            }
-
-            if (8 == i)
-            {
-                continue;
-            }
-        }
+            continue;
+        }        
         
         if (0 > statvfs(mountpath, &stats))
         {
@@ -906,6 +787,7 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
     if (total_size)
     {
         *rate = (float)((double)(used_size * 100) / total_size);
+        ret = 0;
     }
     else
     {

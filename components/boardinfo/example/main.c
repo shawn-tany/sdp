@@ -205,20 +205,7 @@ int main(int argc, char *argv[ ])
         {        
             snprintf(buffer, sizeof(buffer), "%3.2f%c", usage_rate, '%');
             printf("Memory usagerate       : %s\n", buffer);
-        }
-
-        for (i = 0; i < disk_num; ++i)
-        {
-            if (0 > bi_disk_io_usagerate_get(i, &usage_rate))
-            {
-                printf("get disk io usagerate failed\n");
-            }
-            else
-            {
-                snprintf(buffer, sizeof(buffer), "%3.2f%c", usage_rate, '%');
-                printf("DISK(%d) IO usagerate   : %s\n", i, buffer);
-            }
-        }
+        }        
 
         for (i = 0; i < disk_num; ++i)
         {

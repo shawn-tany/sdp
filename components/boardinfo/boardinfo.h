@@ -47,8 +47,6 @@ int bi_disk_name_get(int disk_index, char *name, int name_size);
 
 int bi_disk_size_get(int disk_index, int *size);
 
-int bi_disk_io_usagerate_get(int disk_index, float *rate);
-
 int bi_disk_usagerate_get(int disk_index, float *rate);
 
 #endif

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/statvfs.h>
 
 #include "boardinfo.h"
 
@@ -11,6 +12,8 @@
 #define BI_MEM_INFO_FILE "/proc/meminfo"
 
 #define BI_DSK_INFO_FILE "/proc/partitions"
+#define BI_DSK_STAT_FILE "/proc/diskstats"
+#define BI_DSK_MNTS_FILE  "/proc/mounts"
 
 #define ITEM(a) (sizeof(a) / sizeof(a[0]))
 
@@ -36,17 +39,39 @@ typedef struct
 
 typedef struct 
 {
-    char name[20];
-    int major_number;
-    int minor_number;
-    int total_size;
-} DISK_INFO_T;
+    int disk_num;
+
+    struct 
+    {
+        char name[20];
+        int major_number;
+        int minor_number;
+        int total_size;
+    } info [20];
+} DISKS_INFO_T;
 
 typedef struct 
 {
     int disk_num;
-    DISK_INFO_T info[20];
-} DISK_STAT_T;
+
+    struct 
+    {
+        int major_number;
+        int minor_number;
+        
+        char name[20];
+        
+        unsigned long rd_ios;
+        unsigned long rd_merges;
+        unsigned long rd_sectors;
+        unsigned long rd_ticks;
+        
+        unsigned long wr_ios;
+        unsigned long wr_merges;
+        unsigned long wr_sectors;
+        unsigned long wr_ticks;
+    } stat[20];
+} DISKS_STAT_T;
 
 static CPU_STAT_T g_cpu_stat[MAX_CPU_NUM] = {0};
 static CPU_STAT_T g_cpu_stat_total= {0};
@@ -277,9 +302,9 @@ static int bi_meminfo_get(MEM_INFO_T *minfo)
     return 0;
 }
 
-static int bi_diskinfo_get(DISK_STAT_T *dstat)
+static int bi_diskinfo_get(DISKS_INFO_T *dinfo)
 {
-    if (!dstat)
+    if (!dinfo)
     {
         return -1;
     }
@@ -298,7 +323,7 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
         return -1;
     }
 
-    dstat->disk_num = 0;
+    dinfo->disk_num = 0;
 
     while (fgets(line, sizeof(line), fp))
     {
@@ -313,20 +338,20 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
             continue;
         }
         
-        index = dstat->disk_num;
+        index = dinfo->disk_num;
         
         sscanf(line, "%d %d %d %s", 
-                &dstat->info[index].major_number, &dstat->info[index].minor_number, 
-                &dstat->info[index].total_size, dstat->info[index].name);
+                &dinfo->info[index].major_number, &dinfo->info[index].minor_number, 
+                &dinfo->info[index].total_size, dinfo->info[index].name);
 
-        if (0 != dstat->info[index].minor_number)
+        if (0 != dinfo->info[index].minor_number)
         {
             continue;
         }
 
         for (i = 0; i < ITEM(g_disk_prefix_table); ++i)
         {
-            if (!strncmp(dstat->info[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
+            if (!strncmp(dinfo->info[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
             {
                 break;
             }
@@ -337,9 +362,9 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
             continue;
         }
 
-        dstat->disk_num++;
+        dinfo->disk_num++;
 
-        if (dstat->disk_num >= (sizeof(dstat->info) / sizeof(dstat->info[0])))
+        if (dinfo->disk_num >= ITEM(dinfo->info))
         {
             break;
         }
@@ -350,6 +375,119 @@ static int bi_diskinfo_get(DISK_STAT_T *dstat)
     return 0;
 }
 
+static int bi_diskstat_get(DISKS_STAT_T *dstat)
+{
+    if (!dstat)
+    {
+        return -1;
+    }
+
+    FILE *fp;
+    char buffer[256];
+    int i = 0;
+    int index = 0;
+    int headline = 1;
+
+    dstat->disk_num = 0;
+    
+    fp = fopen(BI_DSK_STAT_FILE, "r");
+    if (!fp) 
+    {
+        return -1;
+    }
+  
+    while (fgets(buffer, sizeof(buffer), fp)) 
+    {
+        if (headline)
+        {
+            headline = 0;
+            continue;
+        }
+    
+        index = dstat->disk_num;
+    
+        sscanf(buffer, "%d %d %s %lu %lu %lu %lu %lu %lu %lu %lu\n",
+                &(dstat->stat[index].major_number), &(dstat->stat[index].major_number), (dstat->stat[index].name),  
+                &(dstat->stat[index].rd_ios), &(dstat->stat[index].rd_merges), 
+                &(dstat->stat[index].rd_sectors), &(dstat->stat[index].rd_ticks),
+                &(dstat->stat[index].wr_ios), &(dstat->stat[index].wr_merges), 
+                &(dstat->stat[index].wr_sectors), &(dstat->stat[index].wr_ticks));
+
+        if (0 != dstat->stat[index].minor_number)
+        {
+            continue;
+        }
+
+        for (i = 0; i < ITEM(g_disk_prefix_table); ++i)
+        {
+            if (!strncmp(dstat->stat[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
+            {
+                break;
+            }
+        }
+        
+        if (i >= ITEM(g_disk_prefix_table))
+        {
+            continue;
+        }
+                
+        dstat->disk_num++;
+
+        if (dstat->disk_num >= ITEM(dstat->stat))
+        {
+            break;
+        }
+    }
+ 
+    fclose(fp);
+    
+    return 0;
+}
+
+
+int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *dst_unit)
+{
+    if (!dst || !dst_unit)
+    {
+        return -1;
+    }
+
+    double value = src;
+    int unit = src_unit;
+
+    if (UNIT_TYPE_BIT == src_unit)
+    {
+        if (!((long long)value % 8) && ((long long)value / 8))
+        {
+            value /= 8;
+            unit++;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    while (1 <= (value / 1024))
+    {
+        value /= 1024;
+        unit++;
+    }
+
+    *dst = value;
+    *dst_unit = unit;
+
+    return 0;
+}
+
+char *bi_unit_str(int unit)
+{
+    return (UNIT_TYPE_BIT  == unit) ? "bit"  :
+           (UNIT_TYPE_BYTE == unit) ? "byte" :
+           (UNIT_TYPE_KB   == unit) ? "KB"   :
+           (UNIT_TYPE_MB   == unit) ? "MB"   :
+           (UNIT_TYPE_GB   == unit) ? "GB"   : "unkown";
+}
 
 int bi_cpu_num_get(int *cpu_num)
 {
@@ -592,14 +730,14 @@ int bi_disk_num_get(int *disk_num)
         return -1;
     }
 
-    DISK_STAT_T dstat = {0};
+    DISKS_INFO_T dinfo = {0};
 
-    if (0 > bi_diskinfo_get(&dstat))
+    if (0 > bi_diskinfo_get(&dinfo))
     {
         return -1;
     }
 
-    *disk_num = dstat.disk_num;
+    *disk_num = dinfo.disk_num;
 
     return 0;
 }
@@ -611,19 +749,19 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
         return -1;
     }
 
-    DISK_STAT_T dstat = {0};
+    DISKS_INFO_T dinfo = {0};
 
-    if (0 > bi_diskinfo_get(&dstat))
+    if (0 > bi_diskinfo_get(&dinfo))
     {
         return -1;
     }
 
-    if (disk_index >= ITEM(dstat.info) || disk_index >= dstat.disk_num)
+    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
     {
         return -1;
     }
 
-    snprintf(name, name_size, "%s", dstat.info[disk_index].name);
+    snprintf(name, name_size, "%s", dinfo.info[disk_index].name);
 
     return 0;
 }
@@ -635,64 +773,136 @@ int bi_disk_size_get(int disk_index, int *size)
         return -1;
     }
 
-    DISK_STAT_T dstat = {0};
+    DISKS_INFO_T dinfo = {0};
 
-    if (0 > bi_diskinfo_get(&dstat))
+    if (0 > bi_diskinfo_get(&dinfo))
     {
         return -1;
     }
 
-    if (disk_index >= ITEM(dstat.info) || disk_index >= dstat.disk_num)
+    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
     {
         return -1;
     }
 
-    *size = dstat.info[disk_index].total_size;
+    *size = dinfo.info[disk_index].total_size;
     
     return 0;
 }
 
-int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, int *dst_unit)
+int bi_disk_io_usagerate_get(int disk_index, float *rate)
 {
-    if (!dst || !dst_unit)
+    if (!rate)
     {
         return -1;
     }
 
-    double value = src;
-    int unit = src_unit;
+    DISKS_STAT_T dstat = {0};
 
-    if (UNIT_TYPE_BIT == src_unit)
+    float rd_sec = 0.0;
+    float wr_sec = 0.0;
+
+    if (0 > bi_diskstat_get(&dstat))
     {
-        if (!((long long)value % 8) && ((long long)value / 8))
-        {
-            value /= 8;
-            unit++;
-        }
-        else
-        {
-            return -1;
-        }
+        return -1;
     }
 
-    while (1 <= (value / 1024))
+    if (disk_index >= ITEM(dstat.stat) || disk_index >= dstat.disk_num)
     {
-        value /= 1024;
-        unit++;
+        return -1;
     }
 
-    *dst = value;
-    *dst_unit = unit;
+    rd_sec = dstat.stat[disk_index].rd_ios ? (dstat.stat[disk_index].rd_sectors / dstat.stat[disk_index].rd_ios) : 0;
 
+    wr_sec = dstat.stat[disk_index].wr_ios ? (dstat.stat[disk_index].wr_sectors / dstat.stat[disk_index].wr_ios) : 0;
+
+    *rate = (rd_sec + wr_sec) / 2;
+    
     return 0;
 }
 
-char *bi_unit_str(int unit)
+int bi_disk_usagerate_get(int disk_index, float *rate)
 {
-    return (UNIT_TYPE_BIT  == unit) ? "bit"  :
-           (UNIT_TYPE_BYTE == unit) ? "byte" :
-           (UNIT_TYPE_KB   == unit) ? "KB"   :
-           (UNIT_TYPE_MB   == unit) ? "MB"   :
-           (UNIT_TYPE_GB   == unit) ? "GB"   : "unkown";
+    if (!rate)
+    {
+        return -1;
+    }
+
+    FILE *fp = NULL;    
+    DISKS_INFO_T dinfo = {0};
+    char buffer[256] = {0};
+    char diskname[256] = {0};
+    char mountpath[256] = {0};
+    char dstdiskname[256] = {0};
+    int ret = -1;
+    int i = 0;
+    int headline = 1;
+    unsigned long long used_size = 0;
+    unsigned long long total_size = 0;
+    struct statvfs stats;
+
+    if (0 > bi_diskinfo_get(&dinfo))
+    {
+        return -1;
+    }
+    
+    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
+    {
+        return -1;
+    }
+
+    fp = fopen(BI_DSK_MNTS_FILE, "r");
+    if (!fp)
+    {
+        return -1;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp))
+    {
+        if (headline)
+        {
+            headline = 0;
+            continue;
+        }
+    
+        sscanf(buffer, "%s %s", diskname, mountpath);
+
+        for (i = 1; i < 8; ++i)
+        {
+            snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s%d", dinfo.info[disk_index].name, i);
+    
+            if (!strcmp(dstdiskname, diskname))
+            {
+                ret = 0;
+                break;
+            }
+        }
+
+        if (8 == i)
+        {
+            continue;
+        }
+
+        if (0 > statvfs(mountpath, &stats))
+        {
+            ret = -1;
+            break;
+        }
+
+        used_size += ((stats.f_blocks - stats.f_bfree) * stats.f_frsize);
+        total_size += (stats.f_blocks * stats.f_frsize);
+    }
+
+    if (total_size)
+    {
+        *rate = (float)((double)(used_size * 100) / total_size);
+    }
+    else
+    {
+        *rate = 0.0;
+    }
+    
+    return ret;
 }
+
 

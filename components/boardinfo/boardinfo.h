@@ -12,7 +12,7 @@ typedef enum
 
 char *bi_unit_str(int unit);
 
-int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, int *dst_unit);
+int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *dst_unit);
 
 /* cpu info */
 int bi_cpu_num_get(int *cpu_num);
@@ -46,5 +46,9 @@ int bi_disk_num_get(int *disk_num);
 int bi_disk_name_get(int disk_index, char *name, int name_size);
 
 int bi_disk_size_get(int disk_index, int *size);
+
+int bi_disk_io_usagerate_get(int disk_index, float *rate);
+
+int bi_disk_usagerate_get(int disk_index, float *rate);
 
 #endif

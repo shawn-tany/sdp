@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #define BYTE2KB (1024)
 #define BYTE2MB (1024 * 1024)
 #define BYTE2GB (1024 * 1024 * 1024)
 
 #define TEST_TIMES 100
+#define TEST_STEP  (usleep(200 * 1000))
 
 typedef unsigned long long SIZE_T;
 
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
     SIZE_T size = 0;
     SIZE_T block_size = 0;
     SIZE_T last_size = 0;
+    SIZE_T test_times = 0;
     void *test_ptr[TEST_TIMES] = {0};
     void *test_last_ptr = NULL;
 
@@ -87,10 +90,52 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    block_size = size / TEST_NUM;
+    printf("memory test size %llu bytes\n", size);
 
-    for (i = 0; i < TEST_NUM; ++i)
+    block_size = size / TEST_TIMES;
+    last_size  = size % TEST_TIMES;
+
+    while (1)
     {
-        test_ptr[i] = malloc()
+        for (i = 0; i < TEST_TIMES; ++i)
+        {
+            test_ptr[i] = malloc(block_size);
+            if (!test_ptr[i])
+            {
+                printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
+                test_ptr[i] = NULL;
+            }
+            memset(test_ptr[i], 0, block_size);
+            TEST_STEP;
+        }
+        
+        test_last_ptr = malloc(last_size);
+        if (!test_last_ptr)
+        {
+            printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
+            test_last_ptr = NULL;
+        }        
+        memset(test_last_ptr, 0, last_size);
+
+        TEST_STEP;
+
+        printf("memory test %llu times\n", ++test_times);
+
+        for (i = 0; i < TEST_TIMES; ++i)
+        {
+            if (test_ptr[i])
+            {
+                free(test_ptr[i]);
+                test_ptr[i] = NULL;
+            }
+            TEST_STEP;
+        }
+        if (test_last_ptr)
+        {
+            free(test_last_ptr);
+            test_last_ptr = NULL;
+        }
     }
+    
+    return 0;
 }

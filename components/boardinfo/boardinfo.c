@@ -13,7 +13,7 @@
 
 #define BI_DSK_INFO_FILE "/proc/partitions"
 #define BI_DSK_STAT_FILE "/proc/diskstats"
-#define BI_DSK_MNTS_FILE  "/proc/mounts"
+#define BI_DSK_MNTS_FILE "/proc/mounts"
 
 #define ITEM(a) (sizeof(a) / sizeof(a[0]))
 
@@ -101,7 +101,8 @@ static int bi_cpuinfo_string_get(int cpu_index, char *key, char *string, int str
     
     fp = fopen(BI_CPU_INFO_FILE, "r");
     if (!fp) 
-    {
+    {    
+        perror("fopen");
         return -1;
     }
  
@@ -173,7 +174,8 @@ static int bi_cpuinfo_int_get(int cpu_index, char *key, int *value)
     
     fp = fopen(BI_CPU_INFO_FILE, "r");
     if (!fp) 
-    {
+    {    
+        perror("fopen");
         return -1;
     }
  
@@ -494,7 +496,8 @@ int bi_cpu_usagerate_get(int cpu_index, float *rate)
 
     fp = fopen(BI_CPU_STAT_FILE, "r");
     if (!fp) 
-    {
+    {        
+        perror("fopen");
         return 1;
     }
 
@@ -753,7 +756,8 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
 
     fp = fopen(BI_DSK_MNTS_FILE, "r");
     if (!fp)
-    {
+    {    
+        perror("fopen");
         return -1;
     }
 
@@ -783,6 +787,8 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
         used_size += ((stats.f_blocks - stats.f_bfree) * stats.f_frsize);
         total_size += (stats.f_blocks * stats.f_frsize);
     }
+
+    fclose(fp);
 
     if (total_size)
     {

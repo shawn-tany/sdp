@@ -6,3 +6,5 @@ components/dirtraval/example/build/
 components/threadpool/example/build/
 components/transmission/base/tcp/client/example/build
 components/transmission/base/tcp/server/example/build
+test/memory/build
+test/disk/build

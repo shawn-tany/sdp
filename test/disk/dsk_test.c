@@ -244,8 +244,6 @@ int disk_test(SIZE_T size)
 
 static void test_exit(int arg)
 {
-    int i = 0;
-
     if (SIGINT == arg)
     {
         running = 0;
@@ -270,7 +268,7 @@ int main(int argc, char *argv[ ])
         return -1;
     }
 
-    printf("memory test size %llu bytes\n", size);
+    printf("disk test size %llu bytes\n", size);
 
     disk_test(size);
 

@@ -87,7 +87,7 @@ static int memory_test(SIZE_T size)
             test_ptr[i] = malloc(block_size);
             if (!test_ptr[i])
             {
-                printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
+                printf("memory test block(%d) %llu bytes alloc failed\n", i, block_size);
                 test_ptr[i] = NULL;
             }
             memset(test_ptr[i], 0, block_size);
@@ -99,7 +99,7 @@ static int memory_test(SIZE_T size)
             test_last_ptr = malloc(last_size);
             if (!test_last_ptr)
             {
-                printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
+                printf("memory test block(%d) %llu bytes alloc failed\n", i, block_size);
                 test_last_ptr = NULL;
             }        
             memset(test_last_ptr, 0, last_size);

@@ -68,29 +68,14 @@ static void help(char *program)
            "                      %s 1024KB\n", program, program, program);
 }
 
-int main(int argc, char *argv[])
+static int memory_test(SIZE_T size)
 {
     int i = 0;
-    SIZE_T size = 0;
     SIZE_T block_size = 0;
     SIZE_T last_size = 0;
     SIZE_T test_times = 0;
     void *test_ptr[TEST_TIMES] = {0};
     void *test_last_ptr = NULL;
-
-    if (2 > argc)
-    {
-        help(argv[0]);
-    }
-
-    size = unit_convert_to_byte(argv[1]);
-    if (!size)
-    {
-        printf("ERROR : invalid memory size\n");
-        return -1;
-    }
-
-    printf("memory test size %llu bytes\n", size);
 
     block_size = size / TEST_TIMES;
     last_size  = size % TEST_TIMES;
@@ -108,16 +93,19 @@ int main(int argc, char *argv[])
             memset(test_ptr[i], 0, block_size);
             TEST_STEP;
         }
-        
-        test_last_ptr = malloc(last_size);
-        if (!test_last_ptr)
-        {
-            printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
-            test_last_ptr = NULL;
-        }        
-        memset(test_last_ptr, 0, last_size);
 
-        TEST_STEP;
+        if (last_size)
+        {
+            test_last_ptr = malloc(last_size);
+            if (!test_last_ptr)
+            {
+                printf("memory test block(%d) %d bytes alloc failed\n", i, block_size);
+                test_last_ptr = NULL;
+            }        
+            memset(test_last_ptr, 0, last_size);
+
+            TEST_STEP;
+        }
 
         printf("memory test %llu times\n", ++test_times);
 
@@ -130,12 +118,36 @@ int main(int argc, char *argv[])
             }
             TEST_STEP;
         }
+        
         if (test_last_ptr)
         {
             free(test_last_ptr);
             test_last_ptr = NULL;
         }
     }
+
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    SIZE_T size = 0;
+
+    if (2 > argc)
+    {
+        help(argv[0]);
+    }
+
+    size = unit_convert_to_byte(argv[1]);
+    if (!size)
+    {
+        printf("ERROR : invalid memory size\n");
+        return -1;
+    }
+
+    printf("memory test size %llu bytes\n", size);
+
+    memory_test(size);
     
     return 0;
 }

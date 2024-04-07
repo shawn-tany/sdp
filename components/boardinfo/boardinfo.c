@@ -81,7 +81,8 @@ static struct
     char *prefix;
     int prefix_len;
 } g_disk_prefix_table[] = {
-    { "sd", 2 }
+    { "sd", 2 },
+    { "mmcblk", 6 }
 };
 
 static int bi_cpuinfo_string_get(int cpu_index, char *key, char *string, int string_size)
@@ -867,22 +868,31 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
     
         sscanf(buffer, "%s %s", diskname, mountpath);
 
-        for (i = 1; i < 8; ++i)
+        snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s", dinfo.info[disk_index].name);
+
+        if (!strcmp(dstdiskname, diskname))
         {
-            snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s%d", dinfo.info[disk_index].name, i);
-    
-            if (!strcmp(dstdiskname, diskname))
+            ret = 0;
+        }
+        else
+        {
+            for (i = 1; i < 8; ++i)
             {
-                ret = 0;
-                break;
+                snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s%d", dinfo.info[disk_index].name, i);
+        
+                if (!strcmp(dstdiskname, diskname))
+                {
+                    ret = 0;
+                    break;
+                }
+            }
+
+            if (8 == i)
+            {
+                continue;
             }
         }
-
-        if (8 == i)
-        {
-            continue;
-        }
-
+        
         if (0 > statvfs(mountpath, &stats))
         {
             ret = -1;

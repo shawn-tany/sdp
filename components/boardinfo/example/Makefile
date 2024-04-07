@@ -6,7 +6,7 @@ ROOT_DIR = $(CUR_DIR)/../../..
 BUILD_DIR = ./build
 APP = binfo
 
-CREATE_LIB_DIR = ./lib
+CREATE_LIB_DIR = ../lib
 CREATE_LIB = boardinfo-linux
 
 OUTSRCS = $(CUR_DIR)/main.c

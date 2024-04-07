@@ -21,7 +21,7 @@ int main(int argc, char *argv[ ])
         return -1;
     }
 
-    dir_ctx_t *ctx = NULL;
+    DIR_CTX_T *ctx = NULL;
     DIR_STATUS_T ret = DIR_SUCCESS;
 
     if (DIR_SUCCESS != (ret = dir_init(&ctx, path, 10000)))
@@ -29,7 +29,7 @@ int main(int argc, char *argv[ ])
         return ret;
     }
 
-    dir_node_t node;
+    DIR_NODE_T node;
     int i;
 
     do 

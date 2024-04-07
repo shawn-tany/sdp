@@ -1,21 +1,25 @@
 CC = gcc
 
-SOURCE_DIR = $(PWD)
-ROOT_DIR = $(SOURCE_DIR)/../../..
-
-APP = binfo
+CUR_DIR = $(PWD)
+ROOT_DIR = $(CUR_DIR)/../../..
 
 BUILD_DIR = ./build
+APP = binfo
 
-SRCS  = $(SOURCE_DIR)/*.c
-SRCS += $(SOURCE_DIR)/../*.c
+CREATE_LIB_DIR = ./lib
+CREATE_LIB = boardinfo-linux
+
+OUTSRCS = $(CUR_DIR)/main.c
+
+SRCS  = $(CUR_DIR)/main.c
+SRCS += $(CUR_DIR)/../boardinfo.c
 
 CFLAGS  = -Wall -Werror
 CFLAGS += -g
 CFLAGS += -O0
-CFLAGS += -I $(SOURCE_DIR)/..
+CFLAGS += -I $(CUR_DIR)/..
 
-ALL : compile_check compile
+ALL : build_lib_check build_lib compile_check compile
 
 clean : clean_build
 

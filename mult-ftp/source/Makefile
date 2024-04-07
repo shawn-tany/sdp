@@ -1,7 +1,7 @@
 CC = gcc
 
-SOURCE_DIR = $(PWD)
-ROOT_DIR = $(SOURCE_DIR)/../..
+CUR_DIR = $(PWD)
+ROOT_DIR = $(CUR_DIR)/../..
 COMPONENTS_DIR = $(ROOT_DIR)/components
 COMMON_DIR = $(ROOT_DIR)/common
 
@@ -9,8 +9,8 @@ APP = mftp
 
 BUILD_DIR = ../build
 
-SRCS  = $(SOURCE_DIR)/main.c
-SRCS += $(SOURCE_DIR)/fileopt/*.c
+SRCS  = $(CUR_DIR)/main.c
+SRCS += $(CUR_DIR)/fileopt/*.c
 SRCS += $(COMPONENTS_DIR)/structure/*.c
 SRCS += $(COMPONENTS_DIR)/transmission/*.c
 SRCS += $(COMPONENTS_DIR)/transmission/serial/*.c
@@ -21,7 +21,7 @@ SRCS += $(COMPONENTS_DIR)/dirtraval/*.c
 CFLAGS  = -Wall -Werror
 CFLAGS += -g
 CFLAGS += -O0
-CFLAGS += -I $(SOURCE_DIR)/fileopt
+CFLAGS += -I $(CUR_DIR)/fileopt
 CFLAGS += -I $(COMMON_DIR)
 CFLAGS += -I $(COMPONENTS_DIR)/structure
 CFLAGS += -I $(COMPONENTS_DIR)/transmission

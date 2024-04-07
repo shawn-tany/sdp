@@ -10,11 +10,11 @@
 #include <sys/select.h>
 #include <netinet/udp.h>
 
-#include "udp_client.h"
+#include "udp_server.h"
 
-static int _udp_client_init(UDP_CLIENT_T *client)
+static int _udp_server_init(UDP_SERVER_T *server)
 {
-    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(server);
 
     int ret = 0;
     int sock = 0;
@@ -30,7 +30,7 @@ static int _udp_client_init(UDP_CLIENT_T *client)
     }
 
     /* bind udp_ctl->ethdev */
-    snprintf(ifrq.ifr_ifrn.ifrn_name, UDP_ETHDEV_LEN, "%s", client->info.ethdev);
+    snprintf(ifrq.ifr_ifrn.ifrn_name, UDP_ETHDEV_LEN, "%s", server->info.ethdev);
     ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char *)&ifrq, sizeof(ifrq));
     if (ret < 0)
     {
@@ -41,46 +41,55 @@ static int _udp_client_init(UDP_CLIENT_T *client)
 
     /* server ip & server port */
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = htons(client->info.port);  
-    inet_pton(AF_INET, client->info.ip, &server_addr.sin_addr);
+    server_addr.sin_port   = htons(server->info.port);  
+    inet_pton(AF_INET, server->info.ip, &server_addr.sin_addr);
 
-    client->desc.sock = sock;
+    /* connect server */
+    ret = bind(sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (ret < 0) {
+        perror("bind error");
+        close(sock);
+        free(server);
+        return NULL;
+    }
+
+    server->desc.sock = sock;
 
     return 0;
 }
 
-/* client api */
-UDP_CLIENT_T * udp_client_init(char *ip, UINT16_T port, char *ethdev)
+/* server api */
+UDP_SERVER_T * udp_server_init(char *ip, UINT16_T port, char *ethdev)
 {
     PTR_CHECK_NULL(ip);
     PTR_CHECK_NULL(ethdev);
 
-    UDP_CLIENT_T *client = NULL;
+    UDP_SERVER_T *server = NULL;
 
-    client = (UDP_CLIENT_T *)malloc(sizeof(*client));
-    if (!client)
+    server = (UDP_SERVER_T *)malloc(sizeof(*server));
+    if (!server)
     {
-        printf("ERROR : Can not create udp client\n");
+        printf("ERROR : Can not create udp server\n");
         return NULL;
     }
 
-    snprintf(client->info.ip, sizeof(client->info.ip), "%s", ip);
-    client->info.port = port;
-    snprintf(client->info.ethdev, sizeof(client->info.ethdev), "%s", ethdev);
+    snprintf(server->info.ip, sizeof(server->info.ip), "%s", ip);
+    server->info.port = port;
+    snprintf(server->info.ethdev, sizeof(server->info.ethdev), "%s", ethdev);
 
-    if (0 > _udp_client_init(client))
+    if (0 > _udp_server_init(server))
     {
-        printf("ERROR : udp client connect failed\n");
-        free(client);
+        printf("ERROR : udp server connect failed\n");
+        free(server);
         return NULL;
     }
 
-    return client;
+    return server;
 }
 
-int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
+int udp_server_recv(UDP_SERVER_T *server, void *data, int data_len)
 {
-    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(server);
     PTR_CHECK_N1(data);
 
     int ret    = 0;
@@ -96,9 +105,9 @@ int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
     tv.tv_usec = 0;
     
     FD_ZERO(&rcvset);
-    FD_SET(client->desc.sock, &rcvset);
+    FD_SET(server->desc.sock, &rcvset);
     
-    ready = select(client->desc.sock + 1, &rcvset, NULL, NULL, &tv);
+    ready = select(server->desc.sock + 1, &rcvset, NULL, NULL, &tv);
     if (0 > ready)
     {
         perror("select error");
@@ -112,7 +121,7 @@ int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
 
     while ((recvtm++ <= UDP_RECV_TIMEOUT))
     {
-        length = recv(client->desc.sock, data + offset, data_len - offset, MSG_DONTWAIT);
+        length = recv(server->desc.sock, data + offset, data_len - offset, MSG_DONTWAIT);
         if(0 > length)
         {
             if ((EAGAIN == errno) || (EWOULDBLOCK == errno))
@@ -143,14 +152,14 @@ int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
     return offset;
 }
 
-int udp_client_send(UDP_CLIENT_T *client, void *data, int data_len)
+int udp_server_send(UDP_SERVER_T *server, void *data, int data_len)
 {
-    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(server);
     PTR_CHECK_N1(data);
 
     int ret    = 0;
     int length = 0;
-    int socket = client->desc.sock;
+    int socket = server->desc.sock;
 
     length = send(socket, data, data_len, MSG_DONTWAIT);
     if (0 > length)
@@ -161,13 +170,13 @@ int udp_client_send(UDP_CLIENT_T *client, void *data, int data_len)
     return length;
 }
 
-int udp_client_uninit(UDP_CLIENT_T *client)
+int udp_server_uninit(UDP_SERVER_T *server)
 {
-    PTR_CHECK_N1(client);
+    PTR_CHECK_N1(server);
 
-    close(client->desc.sock);
+    close(server->desc.sock);
 
-    free(client);
+    free(server);
 
     return 0;
 }

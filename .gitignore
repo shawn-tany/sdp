@@ -33,3 +33,6 @@ components/transmission/base/tcp/client/lib
 components/transmission/base/tcp/server/example/*.o
 components/transmission/base/tcp/server/*.o
 components/transmission/base/tcp/server/lib
+
+test/memory/*.o
+test/disk/*.o

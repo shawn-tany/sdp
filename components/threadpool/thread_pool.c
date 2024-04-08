@@ -53,6 +53,8 @@ static void *thread_task_work(void *arg)
         event->func(event->arg, event->arg_used_size);
     }
 
+    free(event);
+
     return NULL;
 }
 

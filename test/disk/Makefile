@@ -7,7 +7,7 @@ APP = disk_cap_test
 
 BUILD_DIR = ./build
 
-SRCS  = $(SOURCE_DIR)/*.c
+SRCS  = $(SOURCE_DIR)/dsk_test.c
 
 CFLAGS  = -Wall -Werror
 CFLAGS += -g

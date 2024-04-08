@@ -15,19 +15,19 @@ int main(int argc, char *argv[ ])
     int cpu_num = 0;
     int disk_num = 0;
     int freq = 0;
-    int size = 0;
+    SIZE_T size = 0;
     float usage_rate = 0;
     int lineoffset = 1;
     double cov_value = 0.0;
     UNIT_TYPE_T cov_unit = 0;
     int times = 0;
 
-    if (2 < argc)
+    if (2 <= argc)
     {
         times = strtol(argv[1], NULL, 0);
     }
 
-    while ((1 == argc) || ((2 > argc) && (times--)))
+    while ((1 == argc) || ((2 >= argc) && (times--)))
     {
         lineoffset = 1;
     

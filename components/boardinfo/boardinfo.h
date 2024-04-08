@@ -83,7 +83,7 @@ int bi_cpu_cachesize_get(int cpu_index, SIZE_T *size);
 /* 
  * 功能 : 获取cpu使用率
  * 参数 :
- *      cpu_index : cpu核心下标，若下标为-1，则获取cpu总使用率；若下标处于 0 ~ <cpu_num -1> 范围内，则获取单个核心的占用率
+ *      cpu_index : cpu核心下标
  *      rate : cpu占用率<输出参数>
  * 返回 : 
  *      成功返回0

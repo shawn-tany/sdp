@@ -10,11 +10,7 @@ APP = cli
 BUILD_DIR = ./build
 
 SRCS  = $(CUR_DIR)/main.c
-SRCS += $(CUR_DIR)/../sdp_cli.c
-SRCS += $(CUR_DIR)/../sdp_cli_ch.c
-SRCS += $(CUR_DIR)/../sdp_cli_cmd.c
-SRCS += $(CUR_DIR)/../sdp_cli_cmdfunc.c
-SRCS += $(CUR_DIR)/../sdp_cli_line.c
+SRCS += $(wildcard $(CUR_DIR)/../*.c)
 SRCS += $(COMPONENTS_DIR)/structure/sdp_trie.c
 SRCS += $(COMPONENTS_DIR)/structure/sdp_stack.c
 

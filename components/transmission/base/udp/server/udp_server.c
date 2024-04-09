@@ -96,7 +96,7 @@ int udp_server_recv(UDP_SERVER_T *server, void *data, int data_len)
     int ready  = 0;
     int recvtm = 0;
     int length = 0;
-    int offset = 0;
+    int total_len = 0;
 
     fd_set rcvset;
     struct timeval tv;
@@ -119,37 +119,21 @@ int udp_server_recv(UDP_SERVER_T *server, void *data, int data_len)
         return -1;
     }
 
-    while ((recvtm++ <= UDP_RECV_TIMEOUT))
+    while ((total_len < data_len))
     {
-        length = recv(server->desc.sock, data + offset, data_len - offset, MSG_DONTWAIT);
+        length = recv(server->desc.sock, data + total_len, data_len - total_len, MSG_DONTWAIT);
         if(0 > length)
         {
-            if ((EAGAIN == errno) || (EWOULDBLOCK == errno))
-            {
-                usleep(UDP_RECV_DELAY);
-                continue;
-            }
-            else
-            {
-                perror("recv error");
-                return -1;
-            }
+            perror("recv error");
+            return -1;
         }
         else
         {
-            offset += length;
-
-            if (offset >= data_len)
-            {
-                break;
-            }
-            
-            recvtm = 0;
-            continue;
+            total_len += length;
         }
     }
 
-    return offset;
+    return total_len;
 }
 
 int udp_server_send(UDP_SERVER_T *server, void *data, int data_len)

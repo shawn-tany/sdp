@@ -6,11 +6,14 @@
 
 #include "boardinfo.h"
 
+/* cpu */
 #define BI_CPU_INFO_FILE "/proc/cpuinfo"
 #define BI_CPU_STAT_FILE "/proc/stat"
 
+/* memory */
 #define BI_MEM_INFO_FILE "/proc/meminfo"
 
+/* disk */
 #define BI_DSK_INFO_FILE "/proc/partitions"
 #define BI_DSK_STAT_FILE "/proc/diskstats"
 #define BI_DSK_MNTS_FILE "/proc/mounts"

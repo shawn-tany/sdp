@@ -15,6 +15,7 @@
 typedef struct 
 {
     int sock;
+    struct sockaddr_in server_addr;
 } UDP_CLIENT_DESC_T;
 
 typedef struct 

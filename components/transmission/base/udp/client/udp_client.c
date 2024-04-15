@@ -18,7 +18,6 @@ static int _udp_client_init(UDP_CLIENT_T *client)
 
     int ret = 0;
     int sock = 0;
-    struct sockaddr_in server_addr = {0};
     struct ifreq ifrq = {0};
 
     /* create socket */
@@ -40,9 +39,9 @@ static int _udp_client_init(UDP_CLIENT_T *client)
     }
 
     /* server ip & server port */
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port   = htons(client->info.port);  
-    inet_pton(AF_INET, client->info.ip, &server_addr.sin_addr);
+    client->desc.server_addr.sin_family = AF_INET;
+    client->desc.server_addr.sin_port   = htons(client->info.port);  
+    inet_pton(AF_INET, client->info.ip, &(client->desc.server_addr.sin_addr));
 
     client->desc.sock = sock;
 
@@ -87,7 +86,7 @@ int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
     int ready  = 0;
     int recvtm = 0;
     int length = 0;
-    int offset = 0;
+    int total_len = 0;
 
     fd_set rcvset;
     struct timeval tv;
@@ -110,37 +109,21 @@ int udp_client_recv(UDP_CLIENT_T *client, void *data, int data_len)
         return -1;
     }
 
-    while ((recvtm++ <= UDP_RECV_TIMEOUT))
+    while ((total_len < data_len))
     {
-        length = recv(client->desc.sock, data + offset, data_len - offset, MSG_DONTWAIT);
+        length = recv(client->desc.sock, data + total_len, data_len - total_len, MSG_DONTWAIT);
         if(0 > length)
         {
-            if ((EAGAIN == errno) || (EWOULDBLOCK == errno))
-            {
-                usleep(UDP_RECV_DELAY);
-                continue;
-            }
-            else
-            {
-                perror("recv error");
-                return -1;
-            }
+            perror("recv error");
+            return -1;
         }
         else
         {
-            offset += length;
-
-            if (offset >= data_len)
-            {
-                break;
-            }
-            
-            recvtm = 0;
-            continue;
+            total_len += length;
         }
     }
 
-    return offset;
+    return total_len;
 }
 
 int udp_client_send(UDP_CLIENT_T *client, void *data, int data_len)

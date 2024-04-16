@@ -46,19 +46,6 @@ typedef struct
 
     struct 
     {
-        char name[20];
-        int major_number;
-        int minor_number;
-        int total_size;
-    } info [20];
-} DISKS_INFO_T;
-
-typedef struct 
-{
-    int disk_num;
-
-    struct 
-    {
         int major_number;
         int minor_number;
         
@@ -76,17 +63,25 @@ typedef struct
     } stat[20];
 } DISKS_STAT_T;
 
-static CPU_STAT_T g_cpu_stat[MAX_CPU_NUM] = {0};
-static CPU_STAT_T g_cpu_stat_total= {0};
-
-static struct 
+typedef struct 
 {
-    char *prefix;
-    int prefix_len;
-} g_disk_prefix_table[] = {
-    { "sd", 2 },
-    { "mmcblk", 6 }
-};
+    struct 
+    {
+        int major_number;
+        int minor_number;
+        double size;
+        int type;
+        char name[20];
+        char mount[20];
+    } info[20];
+
+    int total_num;
+    int disk_num;
+} DISKS_INFO_T;
+
+static CPU_STAT_T   g_cpu_stat[MAX_CPU_NUM] = {0};
+static CPU_STAT_T   g_cpu_stat_total= {0};
+static DISKS_INFO_T g_dinfo;
 
 static int bi_cpuinfo_string_get(int cpu_index, char *key, char *string, int string_size)
 {
@@ -379,28 +374,27 @@ static int bi_meminfo_get(MEM_INFO_T *minfo)
     return 0;
 }
 
-static int bi_diskinfo_get(DISKS_INFO_T *dinfo)
+static int __attribute__((constructor)) bi_diskinfo_get(void)
 {
-    if (!dinfo)
-    {
-        return -1;
-    }
-
     FILE *fp = NULL;
     char line[256] = {0};
+    char *ptr = NULL;
 
-    int i = 0;
     int index = 0;
     int headline = 1;
 
-    fp = fopen (BI_DSK_INFO_FILE, "r");
+    int rm = 0;
+    int ro = 0;
+    char size_str[20] = {0};
+    char type_str[20] = {0};
+    char unit = 0;
+
+    fp = popen("lsblk", "r");
     if (!fp)
     {
-        perror("fopen");
+        perror("lsblk");
         return -1;
     }
-
-    dinfo->disk_num = 0;
 
     while (fgets(line, sizeof(line), fp))
     {
@@ -409,45 +403,73 @@ static int bi_diskinfo_get(DISKS_INFO_T *dinfo)
             headline = 0;
             continue;
         }
-    
-        if ('#' == line[0] || '\n' == line[0])
+
+        ptr = line;
+        index = g_dinfo.total_num;
+
+        while (' ' == ptr[0])
+        {
+            ptr += 2;
+        }
+
+        if (0xffffffe2 == ptr[0])
+        {
+            /* partition */
+            ptr += 6;
+        }
+
+        sscanf(ptr, "%s %d:%d %d %s %d %s %s", g_dinfo.info[index].name, 
+                &g_dinfo.info[index].major_number, &g_dinfo.info[index].minor_number,
+                &rm, size_str, &ro, type_str, g_dinfo.info[index].mount);
+
+        /* size */
+        g_dinfo.info[index].size = strtof(size_str, NULL);
+
+        if (strlen(size_str))
+        {
+            unit = size_str[strlen(size_str) - 1];
+        }
+        else
         {
             continue;
         }
         
-        index = dinfo->disk_num;
+        if ('G' == unit)
+        {
+            g_dinfo.info[index].size *= (1024 * 1024 * 1024);
+        }
+        else if ('M' == unit)
+        {
+            g_dinfo.info[index].size *= (1024 * 1024);
+        }
+        else if ('K' == unit)
+        {
+            g_dinfo.info[index].size *= (1024);
+        }
         
-        sscanf(line, "%d %d %d %s", 
-                &dinfo->info[index].major_number, &dinfo->info[index].minor_number, 
-                &dinfo->info[index].total_size, dinfo->info[index].name);
-
-        if (0 != dinfo->info[index].minor_number)
+        /* type */
+        if (!strcmp("disk", type_str))
+        {
+            g_dinfo.info[index].type = 0;
+        }
+        else if (!strcmp("part", type_str) || !strcmp("lvm", type_str))
+        {
+            g_dinfo.info[index].type = 1;
+        }
+        else
         {
             continue;
         }
 
-        for (i = 0; i < ITEM(g_disk_prefix_table); ++i)
-        {
-            if (!strncmp(dinfo->info[index].name, g_disk_prefix_table[i].prefix, g_disk_prefix_table[i].prefix_len))
-            {
-                break;
-            }
-        }
-        
-        if (i >= ITEM(g_disk_prefix_table))
-        {
-            continue;
-        }
+        g_dinfo.total_num++;
 
-        dinfo->disk_num++;
-
-        if (dinfo->disk_num >= ITEM(dinfo->info))
+        if (!g_dinfo.info[index].type)
         {
-            break;
+            g_dinfo.disk_num++;
         }
     }
-    
-    fclose(fp);
+
+    pclose(fp);
 
     return 0;
 }
@@ -865,14 +887,7 @@ int bi_disk_num_get(int *disk_num)
         return -1;
     }
 
-    DISKS_INFO_T dinfo = {0};
-
-    if (0 > bi_diskinfo_get(&dinfo))
-    {
-        return -1;
-    }
-
-    *disk_num = dinfo.disk_num;
+    *disk_num = g_dinfo.disk_num;
 
     return 0;
 }
@@ -894,21 +909,29 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
         return -1;
     }
 
-    DISKS_INFO_T dinfo = {0};
+    int i = 0;
+    int index = 0;
 
-    if (0 > bi_diskinfo_get(&dinfo))
+    if (disk_index >= ITEM(g_dinfo.info) || disk_index >= g_dinfo.disk_num)
     {
         return -1;
     }
 
-    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
+    for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        return -1;
+        if (g_dinfo.info[i].type)
+        {
+            continue;
+        }
+
+        if (index++ == disk_index)
+        {
+            snprintf(name, name_size, "%s", g_dinfo.info[i].name);
+            return 0;
+        }
     }
 
-    snprintf(name, name_size, "%s", dinfo.info[disk_index].name);
-
-    return 0;
+    return -1;
 }
 
 /* 
@@ -927,19 +950,22 @@ int bi_disk_size_get(int disk_index, SIZE_T *size)
         return -1;
     }
 
-    DISKS_INFO_T dinfo = {0};
+    int i = 0;
+    int index = 0;
 
-    if (0 > bi_diskinfo_get(&dinfo))
+    for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        return -1;
-    }
+        if (g_dinfo.info[i].type)
+        {
+            continue;
+        }
 
-    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
-    {
-        return -1;
+        if (index++ == disk_index)
+        {
+            *size = g_dinfo.info[i].size;
+            return 0;
+        }
     }
-
-    *size = dinfo.info[disk_index].total_size;
     
     return 0;
 }
@@ -960,75 +986,70 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
         return -1;
     }
 
-    FILE *fp = NULL;    
-    DISKS_INFO_T dinfo = {0};
-    char buffer[256] = {0};
-    char diskname[256] = {0};
-    char mountpath[256] = {0};
-    char dstdiskname[256] = {0};
-    int ret = -1;
-    int headline = 1;
     unsigned long long used_size = 0;
     unsigned long long total_size = 0;
     struct statvfs stats;
 
-    if (0 > bi_diskinfo_get(&dinfo))
-    {
-        return -1;
-    }
-    
-    if (disk_index >= ITEM(dinfo.info) || disk_index >= dinfo.disk_num)
-    {
-        return -1;
-    }
+    int i = 0;
+    int index = 0;
+    int major = 0;
 
-    fp = fopen(BI_DSK_MNTS_FILE, "r");
-    if (!fp)
-    {    
-        perror("fopen");
-        return -1;
-    }
-
-    while (fgets(buffer, sizeof(buffer), fp))
+    for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        if (headline)
+        if (index == disk_index)
         {
-            headline = 0;
-            continue;
+            major = g_dinfo.info[i++].major_number;
+            break;
         }
-    
-        sscanf(buffer, "%s %s", diskname, mountpath);
-
-        snprintf(dstdiskname, sizeof(dstdiskname), "/dev/%s", dinfo.info[disk_index].name);
-
-        if (strncmp(dstdiskname, diskname, strlen(dstdiskname)))
+        else
         {
-            continue;
-        }        
-        
-        if (0 > statvfs(mountpath, &stats))
+            if (!g_dinfo.info[i].type)
+            {
+                index++;
+            }
+        }
+    }
+
+    for (; i < g_dinfo.total_num; ++i)
+    {
+        if (!(g_dinfo.info[i].type && (major == g_dinfo.info[i].major_number)))
         {
-            ret = -1;
             break;
         }
 
-        used_size += ((stats.f_blocks - stats.f_bfree) * stats.f_frsize);
-        total_size += (stats.f_blocks * stats.f_frsize);
-    }
+        if (!strlen(g_dinfo.info[i].mount))
+        {
+            continue;
+        }
 
-    fclose(fp);
+        if (!strcmp("[SWAP]", g_dinfo.info[i].mount))
+        {
+            used_size += g_dinfo.info[i].size;
+            total_size += g_dinfo.info[i].size;
+        }
+        else
+        {
+            if (0 > statvfs(g_dinfo.info[i].mount, &stats))
+            {
+                return -1;
+            }
+
+            used_size += ((stats.f_blocks - stats.f_bfree) * stats.f_frsize);
+            total_size += (stats.f_blocks * stats.f_frsize);
+        }
+    }
 
     if (total_size)
     {
         *rate = (float)((double)(used_size * 100) / total_size);
-        ret = 0;
     }
     else
     {
         *rate = 0.0;
+        return -1;
     }
     
-    return ret;
+    return 0;
 }
 
 

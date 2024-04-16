@@ -162,7 +162,7 @@ int main(int argc, char *argv[ ])
             }
             else
             {        
-                bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+                bi_unit_convert((double)size, UNIT_TYPE_BYTE, &cov_value, &cov_unit);
                 printf("DISK(%d) size           : %.2f %s\n", i, cov_value, bi_unit_str(cov_unit));
             }
 

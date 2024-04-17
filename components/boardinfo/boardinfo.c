@@ -992,27 +992,24 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
 
     int i = 0;
     int index = 0;
-    int major = 0;
 
     for (i = 0; i < g_dinfo.total_num; ++i)
     {
         if (index == disk_index)
         {
-            major = g_dinfo.info[i++].major_number;
+            i++;
             break;
         }
-        else
+        else if (!g_dinfo.info[i].type)
         {
-            if (!g_dinfo.info[i].type)
-            {
-                index++;
-            }
+            index++;
+            continue;
         }
     }
 
     for (; i < g_dinfo.total_num; ++i)
     {
-        if (!(g_dinfo.info[i].type && (major == g_dinfo.info[i].major_number)))
+        if (!(g_dinfo.info[i].type))
         {
             break;
         }
@@ -1038,7 +1035,7 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
             total_size += (stats.f_blocks * stats.f_frsize);
         }
     }
-
+    
     if (total_size)
     {
         *rate = (float)((double)(used_size * 100) / total_size);

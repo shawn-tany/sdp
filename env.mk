@@ -1,7 +1,7 @@
 CFLAGS += -Wall -Werror
 CFLAGS += -g
 CFLAGS += -O0
-
+    
 OBJALL := $(patsubst %.c, %.o, $(SRCS))
 OBJOUT := $(patsubst %.c, %.o, $(filter-out $(OUTSRCS), $(SRCS)))
 
@@ -24,7 +24,10 @@ build_lib : $(OBJALL)
 	@$(AR) rcs $(CREATE_LIB_DIR)/$(CREATE_LIB).a $(OBJOUT)
 
 %.o: %.c
-	@($(CC) $(CFLAGS) -c -fPIC -o $@ $<) && ((echo "  [SUCCESS] $<") || ((echo "  [FAILED ] $<" && (rm *.o -rf)) && (exit 1)))
+	@($(CC) $(CFLAGS) -c -fPIC -o $@ $<) && \
+	 ((echo "  [SUCCESS] $<") || \
+	 ((echo "  [FAILED ] $<" && \
+	 (rm *.o -rf)) && (exit 1)))
  
 install_check :
 	@echo "install check"

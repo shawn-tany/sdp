@@ -79,6 +79,13 @@ typedef struct
     int disk_num;
 } DISKS_INFO_T;
 
+typedef enum 
+{
+    TYPE_DISK0 = 0,
+    TYPE_DISK1,
+    TYPE_PART,
+} DISK_TYPE_T;
+
 static CPU_STAT_T   g_cpu_stat[MAX_CPU_NUM] = {0};
 static CPU_STAT_T   g_cpu_stat_total= {0};
 static DISKS_INFO_T g_dinfo;
@@ -380,6 +387,7 @@ static int __attribute__((constructor)) bi_diskinfo_get(void)
     char line[256] = {0};
     char *ptr = NULL;
 
+    int i = 0;
     int index = 0;
     int headline = 1;
 
@@ -388,6 +396,9 @@ static int __attribute__((constructor)) bi_diskinfo_get(void)
     char size_str[20] = {0};
     char type_str[20] = {0};
     char unit = 0;
+
+    int last_major = 0xffff;
+    int min_minor_index = 0;
 
     fp = popen("lsblk", "r");
     if (!fp)
@@ -450,11 +461,11 @@ static int __attribute__((constructor)) bi_diskinfo_get(void)
         /* type */
         if (!strcmp("disk", type_str))
         {
-            g_dinfo.info[index].type = 0;
+            g_dinfo.info[index].type = TYPE_DISK0;
         }
         else if (!strcmp("part", type_str) || !strcmp("lvm", type_str))
         {
-            g_dinfo.info[index].type = 1;
+            g_dinfo.info[index].type = TYPE_PART;
         }
         else
         {
@@ -462,14 +473,40 @@ static int __attribute__((constructor)) bi_diskinfo_get(void)
         }
 
         g_dinfo.total_num++;
-
-        if (!g_dinfo.info[index].type)
-        {
-            g_dinfo.disk_num++;
-        }
     }
 
     pclose(fp);
+
+    last_major = g_dinfo.info[0].major_number;
+    min_minor_index = 0;
+
+    if (TYPE_DISK0 == g_dinfo.info[0].type)
+    {
+        g_dinfo.disk_num++;
+    }
+
+    for (i = 1; i < g_dinfo.total_num; ++i)
+    {
+        if (TYPE_DISK0 != g_dinfo.info[i].type)
+        {
+            continue;
+        }
+
+        if ((last_major == g_dinfo.info[i].major_number) &&
+            (g_dinfo.info[i].minor_number > g_dinfo.info[min_minor_index].minor_number))
+        {
+            g_dinfo.info[min_minor_index].type = TYPE_DISK1;
+            g_dinfo.info[i].type = TYPE_DISK0;
+            min_minor_index = i;
+            continue;
+        }
+        else if (last_major != g_dinfo.info[i].major_number)
+        {
+            min_minor_index = g_dinfo.info[i].minor_number;
+            g_dinfo.disk_num++;
+            continue;
+        }
+    }
 
     return 0;
 }
@@ -919,7 +956,7 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
 
     for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        if (g_dinfo.info[i].type)
+        if (TYPE_DISK0 != g_dinfo.info[i].type)
         {
             continue;
         }
@@ -955,7 +992,7 @@ int bi_disk_size_get(int disk_index, SIZE_T *size)
 
     for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        if (g_dinfo.info[i].type)
+        if (TYPE_DISK0 != g_dinfo.info[i].type)
         {
             continue;
         }
@@ -1000,7 +1037,7 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
             i++;
             break;
         }
-        else if (!g_dinfo.info[i].type)
+        else if (TYPE_DISK0 == g_dinfo.info[i].type)
         {
             index++;
             continue;
@@ -1009,7 +1046,7 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
 
     for (; i < g_dinfo.total_num; ++i)
     {
-        if (!(g_dinfo.info[i].type))
+        if (TYPE_DISK0 == g_dinfo.info[i].type)
         {
             break;
         }

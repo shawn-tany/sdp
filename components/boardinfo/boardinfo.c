@@ -71,6 +71,7 @@ typedef struct
         int minor_number;
         double size;
         int type;
+        int index;
         char name[20];
         char mount[20];
     } info[20];
@@ -485,27 +486,39 @@ static int __attribute__((constructor)) bi_diskinfo_get(void)
         g_dinfo.disk_num++;
     }
 
+    g_dinfo.info[0].index = 1;
+
     for (i = 1; i < g_dinfo.total_num; ++i)
     {
+        g_dinfo.info[i].index = g_dinfo.disk_num;
+
         if (TYPE_DISK0 != g_dinfo.info[i].type)
         {
             continue;
         }
 
-        if ((last_major == g_dinfo.info[i].major_number) &&
-            (g_dinfo.info[i].minor_number > g_dinfo.info[min_minor_index].minor_number))
+        if ((last_major == g_dinfo.info[i].major_number))
         {
-            g_dinfo.info[min_minor_index].type = TYPE_DISK1;
-            g_dinfo.info[i].type = TYPE_DISK0;
+            if (g_dinfo.info[i].minor_number < g_dinfo.info[min_minor_index].minor_number)
+            {
+                g_dinfo.info[min_minor_index].type = TYPE_DISK1;
+                g_dinfo.info[i].type = TYPE_DISK0;
+                min_minor_index = i;
+                continue;
+            }
+            else
+            {
+                g_dinfo.info[i].type = TYPE_DISK1;
+            }
+        }
+        else
+        {
             min_minor_index = i;
-            continue;
-        }
-        else if (last_major != g_dinfo.info[i].major_number)
-        {
-            min_minor_index = g_dinfo.info[i].minor_number;
             g_dinfo.disk_num++;
-            continue;
+            last_major = g_dinfo.info[i].major_number;
         }
+
+        g_dinfo.info[i].index = g_dinfo.disk_num;
     }
 
     return 0;
@@ -947,7 +960,6 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
     }
 
     int i = 0;
-    int index = 0;
 
     if (disk_index >= ITEM(g_dinfo.info) || disk_index >= g_dinfo.disk_num)
     {
@@ -961,7 +973,7 @@ int bi_disk_name_get(int disk_index, char *name, int name_size)
             continue;
         }
 
-        if (index++ == disk_index)
+        if (g_dinfo.info[i].index == (disk_index + 1))
         {
             snprintf(name, name_size, "%s", g_dinfo.info[i].name);
             return 0;
@@ -988,19 +1000,19 @@ int bi_disk_size_get(int disk_index, SIZE_T *size)
     }
 
     int i = 0;
-    int index = 0;
+    *size = 0;
 
     for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        if (TYPE_DISK0 != g_dinfo.info[i].type)
+        if ((TYPE_DISK0 != g_dinfo.info[i].type) &&
+            (TYPE_DISK1 != g_dinfo.info[i].type))
         {
             continue;
         }
 
-        if (index++ == disk_index)
+        if (g_dinfo.info[i].index == (disk_index + 1))
         {
-            *size = g_dinfo.info[i].size;
-            return 0;
+            *size += g_dinfo.info[i].size;
         }
     }
     
@@ -1028,27 +1040,26 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
     struct statvfs stats;
 
     int i = 0;
-    int index = 0;
 
     for (i = 0; i < g_dinfo.total_num; ++i)
     {
-        if (index == disk_index)
+        if (g_dinfo.info[i].index == (disk_index + 1))
         {
-            i++;
             break;
-        }
-        else if (TYPE_DISK0 == g_dinfo.info[i].type)
-        {
-            index++;
-            continue;
         }
     }
 
     for (; i < g_dinfo.total_num; ++i)
     {
-        if (TYPE_DISK0 == g_dinfo.info[i].type)
+        if (g_dinfo.info[i].index != (disk_index + 1))
         {
             break;
+        }
+
+        if ((TYPE_DISK1 == g_dinfo.info[i].type) ||
+            (TYPE_DISK0 == g_dinfo.info[i].type))
+        {
+            total_size += g_dinfo.info[i].size;
         }
 
         if (!strlen(g_dinfo.info[i].mount))
@@ -1059,7 +1070,6 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
         if (!strcmp("[SWAP]", g_dinfo.info[i].mount))
         {
             used_size += g_dinfo.info[i].size;
-            total_size += g_dinfo.info[i].size;
         }
         else
         {
@@ -1069,7 +1079,6 @@ int bi_disk_usagerate_get(int disk_index, float *rate)
             }
 
             used_size += ((stats.f_blocks - stats.f_bfree) * stats.f_frsize);
-            total_size += (stats.f_blocks * stats.f_frsize);
         }
     }
     

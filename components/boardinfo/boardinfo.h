@@ -163,6 +163,16 @@ int bi_mem_buffersize_get(SIZE_T *size);
 int bi_mem_cachedsize_get(SIZE_T *size);
 
 /* disk info */
+/*
+ * 功能 : 更新磁盘信息
+ * 参数 :
+ *      void
+ * 返回 :
+ *      成功返回0
+ *      失败返回-1
+ */
+int bi_diskinfo_update(void);
+
 /* 
  * 功能 : 获取磁盘数量
  * 参数 :

@@ -236,7 +236,7 @@ int thread_event_add_wait(THREAD_POOL_T *pool, thread_event_func_t func, void *a
 
     /* wait event queue avaliable */
     while (1)
-    {        
+    {
         pthread_mutex_lock(&(pool->lock));
         
         if (!sdp_queue_full(pool->event_queue))

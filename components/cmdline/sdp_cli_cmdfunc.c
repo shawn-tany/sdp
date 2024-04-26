@@ -130,6 +130,22 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_NEW;
     CLI_CMD_ADD("bbb", "bbbtest");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+    
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("niu", "niutest");
+    CLI_CMD_ADD("le", "letest");
+    CLI_CMD_ADD("shi", "shitest");
+    CLI_CMD_ADD("gang", "gangtest");
+    CLI_CMD_ADD("jin", "jintest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("a", "atest");
+    CLI_CMD_ADD("biao", "biaotest");
+    CLI_CMD_ADD("dang", "dangtest");
+    CLI_CMD_ADD("jiao", "jiaotest");
+    CLI_CMD_ADD("shou", "shoutest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
 
     CLI_CMD_NEW;
     CLI_CMD_ADD("list", "show all command");
@@ -138,7 +154,7 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_NEW;
     CLI_CMD_ADD("exit", "exit sdp command line");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cli_cmdfunc_exit);
-    
+
     CLI_CMD_END;
 
     return 0;

@@ -19,7 +19,7 @@ int main(int argc, char *argv[ ])
     float usage_rate = 0;
     int lineoffset = 1;
     double cov_value = 0.0;
-    UNIT_TYPE_T cov_unit = 0;
+    BI_UNIT_TYPE_T cov_unit = 0;
     int times = 0;
 
     if (2 <= argc)
@@ -72,7 +72,7 @@ int main(int argc, char *argv[ ])
             }
             else
             {
-                bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+                bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
                 printf("CPU(%d) cachesize       : %.2f %s\n", i, cov_value, bi_unit_str(cov_unit));
             }  
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[ ])
         }
         else
         {        
-            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
             printf("Memory totalsize       : %.2f %s\n", cov_value, bi_unit_str(cov_unit));
         }
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[ ])
         }
         else
         {        
-            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
             printf("Memory freesize        : %.2f %s\n", cov_value, bi_unit_str(cov_unit));
         }
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[ ])
         }
         else
         {    
-            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
             printf("Memory avaliablesize   : %.2f %s\n", cov_value, bi_unit_str(cov_unit));
         }
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[ ])
         }
         else
         {    
-            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
             printf("Memory buffersize      : %.2f %s\n", cov_value, bi_unit_str(cov_unit));
         }
 
@@ -126,7 +126,7 @@ int main(int argc, char *argv[ ])
         }
         else
         {    
-            bi_unit_convert((double)size, UNIT_TYPE_KB, &cov_value, &cov_unit);
+            bi_unit_convert((double)size, BI_UNIT_TYPE_KB, &cov_value, &cov_unit);
             printf("Memory cachedsize      : %.2f %s\n", cov_value, bi_unit_str(cov_unit));
         }
         
@@ -162,7 +162,7 @@ int main(int argc, char *argv[ ])
             }
             else
             {        
-                bi_unit_convert((double)size, UNIT_TYPE_BYTE, &cov_value, &cov_unit);
+                bi_unit_convert((double)size, BI_UNIT_TYPE_BYTE, &cov_value, &cov_unit);
                 printf("DISK(%d) size           : %.2f %s\n", i, cov_value, bi_unit_str(cov_unit));
             }
 

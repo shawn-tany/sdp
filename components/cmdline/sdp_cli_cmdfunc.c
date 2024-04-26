@@ -75,7 +75,6 @@ static int cli_cmdfunc_exit(const void *arg, int arg_len)
     return 0;
 }
 
-
 int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
 {
     PTR_CHECK_N1(cli_cmd);
@@ -145,6 +144,14 @@ int cli_cmdfunc_register(CLI_CMD_T *cli_cmd)
     CLI_CMD_ADD("dang", "dangtest");
     CLI_CMD_ADD("jiao", "jiaotest");
     CLI_CMD_ADD("shou", "shoutest");
+    CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
+
+    CLI_CMD_NEW;
+    CLI_CMD_ADD("wei", "weitest");
+    CLI_CMD_ADD("qi", "qitest");
+    CLI_CMD_ADD("da", "datest");
+    CLI_CMD_ADD("shuai", "shuaitest");
+    CLI_CMD_ADD("bi", "bitest");
     CLI_CMD_REGSTER(cli_cmd->cmd_trie, cmd_handle_test);
 
     CLI_CMD_NEW;

@@ -393,7 +393,7 @@ static int bi_meminfo_get(MEM_INFO_T *minfo)
  *      成功返回0
  *      失败返回-1
  */
-int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *dst_unit)
+int bi_unit_convert(double src, BI_UNIT_TYPE_T src_unit, double *dst, BI_UNIT_TYPE_T *dst_unit)
 {
     if (!dst || !dst_unit)
     {
@@ -403,7 +403,7 @@ int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *
     double value = src;
     int unit = src_unit;
 
-    if (UNIT_TYPE_BIT == src_unit)
+    if (BI_UNIT_TYPE_BIT == src_unit)
     {
         if (!((long long)value % 8) && ((long long)value / 8))
         {
@@ -431,18 +431,18 @@ int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *
 /* 
  * 功能 : 返回单位字符串(bit、byte、KB、MB、GB)
  * 参数 ：
- *      unit : 单位类型(    UNIT_TYPE_BIT、UNIT_TYPE_BYTE、UNIT_TYPE_KB、UNIT_TYPE_MB、UNIT_TYPE_GB)
+ *      unit : 单位类型(    BI_UNIT_TYPE_BIT、BI_UNIT_TYPE_BYTE、BI_UNIT_TYPE_KB、BI_UNIT_TYPE_MB、BI_UNIT_TYPE_GB)
  * 返回值 :
  *      成功返回单位对应的字符串
  *      失败返回"unkown"
  */
-char *bi_unit_str(UNIT_TYPE_T unit)
+char *bi_unit_str(BI_UNIT_TYPE_T unit)
 {
-    return (UNIT_TYPE_BIT  == unit) ? "bit"  :
-           (UNIT_TYPE_BYTE == unit) ? "byte" :
-           (UNIT_TYPE_KB   == unit) ? "KB"   :
-           (UNIT_TYPE_MB   == unit) ? "MB"   :
-           (UNIT_TYPE_GB   == unit) ? "GB"   : "unkown";
+    return (BI_UNIT_TYPE_BIT  == unit) ? "bit"  :
+           (BI_UNIT_TYPE_BYTE == unit) ? "byte" :
+           (BI_UNIT_TYPE_KB   == unit) ? "KB"   :
+           (BI_UNIT_TYPE_MB   == unit) ? "MB"   :
+           (BI_UNIT_TYPE_GB   == unit) ? "GB"   : "unkown";
 }
 
 /*

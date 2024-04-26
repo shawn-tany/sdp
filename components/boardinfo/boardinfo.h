@@ -3,24 +3,24 @@
 
 typedef enum 
 {
-    UNIT_TYPE_BIT = 0,
-    UNIT_TYPE_BYTE,
-    UNIT_TYPE_KB,
-    UNIT_TYPE_MB,
-    UNIT_TYPE_GB,
-} UNIT_TYPE_T;
+    BI_UNIT_TYPE_BIT = 0,
+    BI_UNIT_TYPE_BYTE,
+    BI_UNIT_TYPE_KB,
+    BI_UNIT_TYPE_MB,
+    BI_UNIT_TYPE_GB,
+} BI_UNIT_TYPE_T;
 
 typedef unsigned long long SIZE_T;
 
 /* 
  * 功能 : 返回单位字符串(bit、byte、KB、MB、GB)
  * 参数 ：
- *      unit : 单位类型(    UNIT_TYPE_BIT、UNIT_TYPE_BYTE、UNIT_TYPE_KB、UNIT_TYPE_MB、UNIT_TYPE_GB)
+ *      unit : 单位类型(BI_UNIT_TYPE_BIT、BI_UNIT_TYPE_BYTE、BI_UNIT_TYPE_KB、BI_UNIT_TYPE_MB、BI_UNIT_TYPE_GB)
  * 返回值 :
  *      成功返回单位对应的字符串
  *      失败返回"unkown"
  */
-char *bi_unit_str(UNIT_TYPE_T unit);
+char *bi_unit_str(BI_UNIT_TYPE_T unit);
 
 /*
  * 功能 : 单位转换(bit、byte、KB、MB、GB)
@@ -33,7 +33,7 @@ char *bi_unit_str(UNIT_TYPE_T unit);
  *      成功返回0
  *      失败返回-1
  */
-int bi_unit_convert(double src, UNIT_TYPE_T src_unit, double *dst, UNIT_TYPE_T *dst_unit);
+int bi_unit_convert(double src, BI_UNIT_TYPE_T src_unit, double *dst, BI_UNIT_TYPE_T *dst_unit);
 
 /* cpu info */
 /*

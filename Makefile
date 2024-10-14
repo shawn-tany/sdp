@@ -29,6 +29,18 @@ ifeq (${COMPONENTS_TRANSMISSION_BASE_TCP_CLIENT}, yes)
 	SUB_DIRS += $(ROOT_DIR)/components/transmission/base/tcp/client/example/ 
 endif
 
+ifeq (${COMPONENTS_LOGGER}, yes)
+	SUB_DIRS += $(ROOT_DIR)/components/logger/example/ 
+endif
+
+ifeq (${COMPONENTS_EVENT}, yes)
+	SUB_DIRS += $(ROOT_DIR)/components/event/example/ 
+endif
+
+ifeq (${COMPONENTS_IPC_PQUEUE}, yes)
+	SUB_DIRS += $(ROOT_DIR)/components/ipc/pqueue/example/ 
+endif
+
 MAKE = make
 
 MAKE_FLAGS = --no-print-directory 

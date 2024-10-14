@@ -6,9 +6,13 @@ components/dirtraval/example/build/
 components/threadpool/example/build/
 components/transmission/base/tcp/client/example/build
 components/transmission/base/tcp/server/example/build
+components/logger/example/build
+components/event/example/build
+components/ipc/pqueue/example/build
 test/memory/build
 test/disk/build
 
+common/module.o
 components/boardinfo/*.o
 components/boardinfo/example/*.o
 components/boardinfo/lib
@@ -33,6 +37,12 @@ components/transmission/base/tcp/client/lib
 components/transmission/base/tcp/server/example/*.o
 components/transmission/base/tcp/server/*.o
 components/transmission/base/tcp/server/lib
+components/logger/*.o
+components/logger/example/*.o
+components/event/*.o
+components/event/example/*.o
+components/ipc/pqueue/*.o
+components/ipc/pqueue/example/*.o
 
 test/memory/*.o
 test/disk/*.o

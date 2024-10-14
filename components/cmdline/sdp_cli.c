@@ -6,7 +6,6 @@
 #include <sys/types.h>
 
 #include "sdp_cli.h"
-#include "sdp_cli_cmdfunc.h"
 
 static int sdp_cli_separate(SDP_CLI_T *sdp_cli)
 {
@@ -308,8 +307,6 @@ SDP_CLI_T *sdp_cli_init(CLI_CONFIG_T *sdp_cli_config)
         printf("ERROR : failed to create sdp cli cmds\n");
         return NULL;
     }
-
-    cli_cmdfunc_register(sdp_cli->cmds);
 
     return sdp_cli;
 }

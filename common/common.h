@@ -13,6 +13,8 @@ typedef unsigned int UINT32_T;
 typedef long long INT64_T;
 typedef unsigned long long UINT64_T;
 
+typedef int FD_T;
+
 /* point check */
 #define PTR_CHECK_VOID(p)   \
     if (!p) {               \
@@ -41,5 +43,11 @@ typedef unsigned long long UINT64_T;
 #define MAX(a, b) ((a < b) ? b : a)
 
 #define UNUSED(a) ((void)a)
+
+enum 
+{
+    FALSE = 0,
+    TRUE,
+};
 
 #endif

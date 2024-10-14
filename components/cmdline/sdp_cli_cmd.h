@@ -2,6 +2,7 @@
 #define SDP_CLI_COMMAND
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "sdp_trie.h"
 

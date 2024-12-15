@@ -153,9 +153,9 @@ static int sdp_cli_completion(SDP_CLI_T *sdp_cli)
         cli_line_print_line(sdp_cli->config.rowhead, sdp_cli->line);
         return -1;
     }
-    else if (1 == sdp_cli->cmds->complete.num && !sdp_cli->cmds->complete.enter)
+    else if ((sdp_cli->cmds->complete.length || 1 == sdp_cli->cmds->complete.num) && !sdp_cli->cmds->complete.enter)
     {
-        for (i = 0; i < strlen(sdp_cli->cmds->complete.buff[0]); ++i)
+        for (i = 0; i < sdp_cli->cmds->complete.length; ++i)
         {
             sdp_cli_general(sdp_cli->cmds->complete.buff[0][i], sdp_cli);
         }

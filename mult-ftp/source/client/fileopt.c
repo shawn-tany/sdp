@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "fileopt.h"
-#include "transmission.h"
 
 /* file handle */
 static int mftp_file_handle_ll(char *path)
@@ -39,6 +38,16 @@ static int mftp_file_handle_mkdir(char *path)
     return 0;
 }
 
+static int mftp_file_handle_mv(char *path)
+{
+    return 0;
+}
+
+static int mftp_file_handle_cp(char *path)
+{
+    return 0;
+}
+
 static MFTP_FILE_HANDLE_T file_handle_list[] = 
 {
     [MFTP_CMD_LS] = { mftp_file_handle_ll },
@@ -47,7 +56,9 @@ static MFTP_FILE_HANDLE_T file_handle_list[] =
     [MFTP_CMD_UPDATA] = { mftp_file_handle_updata },
     [MFTP_CMD_RM] = { mftp_file_handle_rm },
     [MFTP_CMD_TOUCH] = { mftp_file_handle_touch },
-    [MFTP_CMD_MKDIR] = { mftp_file_handle_mkdir }
+    [MFTP_CMD_MKDIR] = { mftp_file_handle_mkdir },
+    [MFTP_CMD_MV] = { mftp_file_handle_mv },
+    [MFTP_CMD_CP] = { mftp_file_handle_cp }
 };
 
 static int mftp_file_opt_handle(MFTP_FILE_OPT_T *file_opt)
@@ -63,43 +74,6 @@ static int mftp_file_opt_handle(MFTP_FILE_OPT_T *file_opt)
     if (0 > file_handle_list[file_opt->cmd].func(file_opt->src))
     {
         return -1;
-    }
-
-    return 0;
-}
-
-static int mftp_server_init()
-{
-    MFTP_TRANS_DESC_T *trans_desc = NULL;
-
-    trans_init(trans_desc);
-
-    return 0;
-}
-
-static int mftp_server_uninit()
-{
-    MFTP_TRANS_DESC_T *trans_desc = NULL;
-
-    trans_uninit(trans_desc);
-
-    return 0;
-}
-
-static int mftp_server_loop()
-{
-    MFTP_TRANS_DESC_T *trans_desc = NULL;
-    MFTP_MSG_T *msg = NULL;
-
-    while (1)
-    {
-        MFTP_FILE_OPT_T *file_opt = NULL;
-
-        trans_recv(trans_desc, msg);
-
-        mftp_file_opt_handle(file_opt);
-
-        trans_send(trans_desc, msg);
     }
 
     return 0;
@@ -144,24 +118,11 @@ static int mftp_client_loop()
 
 int mftp_work()
 {
-    MFTP_ROLE_T role = MFTP_ROLE_SERVER;
+    mftp_client_init();
 
-    if (MFTP_ROLE_SERVER == role)
-    {
-        mftp_server_init();
+    mftp_client_loop();
 
-        mftp_server_loop();
-
-        mftp_server_uninit();
-    }
-    else
-    {
-        mftp_client_init();
-
-        mftp_client_loop();
-
-        mftp_client_uninit();
-    }
+    mftp_client_uninit();
 
     return 0;
 }

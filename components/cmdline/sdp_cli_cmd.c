@@ -147,6 +147,23 @@ static int cli_cmd_parse(CLI_CMD_T *cli_cmd, char *cmdstr)
     return 0;
 }
 
+static UINT16_T cli_cmd_string_same_length(char *str1, UINT16_T len1, char *str2, UINT16_T len2)
+{
+    int i = 0;
+
+    UINT16_T max_same_len = MIN(len1, len2);
+
+    for (i = 0; i < max_same_len; ++i)
+    {
+        if (str1[i] != str2[i])
+        {
+            break;
+        }
+    }
+
+    return i;
+}
+
 CLI_CMD_T *cli_cmd_init(void)
 {
     CLI_CMD_T *cli_cmd = NULL;
@@ -254,6 +271,7 @@ static int cli_cmd_complete_self(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_node_
     int last_param_index = 0;    
     int last_param_len = 0;
     int complete_num = 0;
+    int complete_len = 0;
     int length = 0;
     SDP_TRIE_NODE_T *trie_node_child = NULL;
     CLI_CMD_NODE_T  *cmd_node_self = NULL;
@@ -310,6 +328,20 @@ static int cli_cmd_complete_self(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_node_
         cli_cmd->complete.num++;
     }
 
+    complete_len = strlen(cli_cmd->complete.buff[0]);
+
+    for (i = 1; i < cli_cmd->complete.num; ++i)
+    {
+        if (!complete_len)
+        {
+            break;
+        }
+
+        complete_len = cli_cmd_string_same_length(cli_cmd->complete.buff[i - 1], complete_len, cli_cmd->complete.buff[i], strlen(cli_cmd->complete.buff[i]));
+    }
+
+    cli_cmd->complete.length = complete_len;
+
     return 0;
 }
 
@@ -319,9 +351,10 @@ static int cli_cmd_complete_parent(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_nod
     PTR_CHECK_N1(trie_node_parent);
 
     int i = 0;
-    int last_param_index = 0;    
+    int last_param_index = 0;
     int last_param_len = 0;
     int complete_num = 0;
+    int complete_len = 0;
     int length = 0;
     SDP_TRIE_NODE_T *trie_node_brother = NULL;
     CLI_CMD_NODE_T  *cmd_node = NULL;
@@ -365,6 +398,21 @@ static int cli_cmd_complete_parent(CLI_CMD_T *cli_cmd, SDP_TRIE_NODE_T *trie_nod
         cli_cmd->complete.buff_ptr[complete_num] = (cli_cmd->complete.buff[complete_num]);
         cli_cmd->complete.num++;
     }
+
+    complete_len = strlen(cli_cmd->complete.buff[0]);
+
+    for (i = 1; i < cli_cmd->complete.num; ++i)
+    {
+        if (!complete_len)
+        {
+            break;
+        }
+
+        complete_len = cli_cmd_string_same_length(cli_cmd->complete.buff[i - 1], complete_len, cli_cmd->complete.buff[i], strlen(cli_cmd->complete.buff[i]));
+    }
+
+    complete_len -= cli_cmd->param.len[cli_cmd->param.num - 1];
+    cli_cmd->complete.length = (0 < complete_len) ? complete_len : 0;
 
     return 0;
 }

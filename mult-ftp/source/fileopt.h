@@ -13,6 +13,8 @@ typedef enum
     MFTP_CMD_RM,
     MFTP_CMD_TOUCH,
     MFTP_CMD_MKDIR,
+    MFTP_CMD_MV,
+    MFTP_CMD_CP,
     MFTP_CMD_NUM,
 
 } MFTP_COMMAND_T;

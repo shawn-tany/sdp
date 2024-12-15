@@ -6,6 +6,7 @@ components/dirtraval/example/build/
 components/threadpool/example/build/
 components/transmission/base/tcp/client/example/build
 components/transmission/base/tcp/server/example/build
+components/transmission/base/udp/example/build
 components/logger/example/build
 components/event/example/build
 components/ipc/pqueue/example/build
@@ -37,6 +38,8 @@ components/transmission/base/tcp/client/lib
 components/transmission/base/tcp/server/example/*.o
 components/transmission/base/tcp/server/*.o
 components/transmission/base/tcp/server/lib
+components/transmission/base/udp/example/*.o
+components/transmission/base/udp/*.o
 components/logger/*.o
 components/logger/example/*.o
 components/event/*.o

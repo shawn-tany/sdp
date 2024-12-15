@@ -29,7 +29,6 @@ typedef struct
     sdp_trie_cmp_func_t cmp_insert;
     sdp_trie_cmp_func_t cmp_found_flex;
     sdp_trie_cmp_func_t cmp_found_fuzz;
-    sdp_trie_cmp_func_t cmp_found_regular;
 } SDP_TRIE_CMP_T;
 
 typedef struct sdp_trie_root
@@ -48,8 +47,6 @@ int sdp_trie_insert(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int
 SDP_TRIE_NODE_T *sdp_trie_found(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num);
 
 SDP_TRIE_NODE_T *sdp_trie_found_incomplete(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num);
-
-SDP_TRIE_NODE_T *sdp_trie_found_regular(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num);
 
 SDP_TRIE_NODE_T *sdp_trie_found_fuzz(SDP_TRIE_ROOT_T *root, void **pattern, int *pattern_len, int ele_num, int fuzz_flag);
 

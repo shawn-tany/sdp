@@ -1,0 +1,1 @@
+/usr/bin/c++ -rdynamic CMakeFiles/pcrecpp_unittest.dir/pcrecpp_unittest.cc.o -o pcrecpp_unittest  libpcrecpp.a libpcre.a 

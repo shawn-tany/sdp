@@ -1,0 +1,15 @@
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcre.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcreposix.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcrecpp.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcregrep.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcretest.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcrecpp_unittest.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcre_scanner_unittest.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/pcre_stringpiece_unittest.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/test.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/edit_cache.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/rebuild_cache.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/list_install_components.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/install.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/install/local.dir
+/home/txy/sdp/components/sdk/pcre/pcre-8.45/build/CMakeFiles/install/strip.dir

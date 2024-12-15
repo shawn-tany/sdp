@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpcrecpp.a CMakeFiles/pcrecpp.dir/pcrecpp.cc.o CMakeFiles/pcrecpp.dir/pcre_scanner.cc.o CMakeFiles/pcrecpp.dir/pcre_stringpiece.cc.o
+/usr/bin/ranlib libpcrecpp.a

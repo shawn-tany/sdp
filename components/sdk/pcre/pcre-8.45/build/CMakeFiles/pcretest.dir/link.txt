@@ -1,0 +1,1 @@
+/usr/bin/cc -rdynamic CMakeFiles/pcretest.dir/pcretest.c.o CMakeFiles/pcretest.dir/pcre_printint.c.o -o pcretest  libpcreposix.a libpcre.a 

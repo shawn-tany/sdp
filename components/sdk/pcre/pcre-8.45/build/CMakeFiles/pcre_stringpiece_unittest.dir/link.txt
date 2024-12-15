@@ -1,0 +1,1 @@
+/usr/bin/c++ -rdynamic CMakeFiles/pcre_stringpiece_unittest.dir/pcre_stringpiece_unittest.cc.o -o pcre_stringpiece_unittest  libpcrecpp.a libpcre.a 

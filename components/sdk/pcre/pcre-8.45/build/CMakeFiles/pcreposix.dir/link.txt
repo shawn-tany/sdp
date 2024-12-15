@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpcreposix.a CMakeFiles/pcreposix.dir/pcreposix.c.o
+/usr/bin/ranlib libpcreposix.a

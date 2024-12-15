@@ -1,0 +1,1 @@
+/usr/bin/c++ -rdynamic CMakeFiles/pcre_scanner_unittest.dir/pcre_scanner_unittest.cc.o -o pcre_scanner_unittest  libpcrecpp.a libpcre.a 

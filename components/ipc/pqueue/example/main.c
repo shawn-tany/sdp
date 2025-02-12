@@ -6,9 +6,9 @@
 
 int main(int argc, char *argv[ ])
 {
-    int       i  = 0;
-    int       v  = 0;
-    PQUEUE_S *pq = NULL;
+    int           i  = 0;
+    PQUEUE_S     *pq = NULL;
+    PQUEUE_NODE_S node;
 
     pq = pqueue_create("test", sizeof(int), 100);
 
@@ -48,20 +48,20 @@ int main(int argc, char *argv[ ])
     {
         for (; i < 100; ++i)
         {
-            pqueue_consume_timeout(pq, &v, sizeof(v), 5);
-            printf("consume %d\n", v);
+            pqueue_consume_timeout(pq, &node, 5);
+            printf("consume %d\n", *(int *)node.data);
         }
 
         for (; i < 200; ++i)
         {
-            pqueue_consume_timeout(pq, &v, sizeof(v), 5);
-            printf("consume %d\n", v);
+            pqueue_consume_timeout(pq, &node, 5);
+            printf("consume %d\n", *(int *)node.data);
         }
 
         for (; i < 300; ++i)
         {
-            pqueue_consume_timeout(pq, &v, sizeof(v), 5);
-            printf("consume %d\n", v);
+            pqueue_consume_timeout(pq, &node, 5);
+            printf("consume %d\n", *(int *)node.data);
         }
     }
 

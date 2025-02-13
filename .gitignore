@@ -46,6 +46,8 @@ components/event/*.o
 components/event/example/*.o
 components/ipc/pqueue/*.o
 components/ipc/pqueue/example/*.o
+components/ipc/psem/*.o
+components/ipc/psem/example/*.o
 
 test/memory/*.o
 test/disk/*.o

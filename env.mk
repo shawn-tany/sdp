@@ -12,7 +12,7 @@ compile_check :
 
 compile : $(OBJALL)
 	@echo "  link to $(APP)"
-	@$(CC) $(OBJALL) -o $(BUILD_DIR)/bin/$(APP) $(CFLAGS) $(LINK_LIBS)
+	@$(CC) $(OBJALL) $(LIBS) -o $(BUILD_DIR)/bin/$(APP) $(CFLAGS) $(LINK_LIBS)
 	@echo "  ## build $(APP) success!"
 
 build_lib_check :

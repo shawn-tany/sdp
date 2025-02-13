@@ -41,7 +41,7 @@ typedef int FD_T;
 
 #define DO_LOOP_START       while (1) {
 #define DO_LOOP_N_START(n)  for (int _n_loop_index = 0; _n_loop_index < n; ++_n_loop_index) {
-#define DP_LOOP_END         }
+#define DO_LOOP_END         }
 
 #define ITEM(a) (sizeof(a) / sizeof(a[0]))
 
